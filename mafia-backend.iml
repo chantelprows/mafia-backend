@@ -7,5 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="com.amazonaws:aws-java-sdk-dynamodb:1.11.289" level="project" />
+    <orderEntry type="library" name="com.amazonaws:aws-lambda-java-core:1.2.0" level="project" />
   </component>
 </module>
