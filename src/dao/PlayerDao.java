@@ -24,7 +24,7 @@ public class PlayerDao {
 
     private static AmazonDynamoDB amazonDynamoDB = AmazonDynamoDBClientBuilder
             .standard()
-            .withRegion("us-west-2")
+            .withRegion("us-west-1")
             .build();
     private static DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
 
@@ -62,7 +62,7 @@ public class PlayerDao {
             }
         }
         else {
-            response = new AddPlayerResponse("Invalid game ID!", "500");
+            response = new AddPlayerResponse("Invalid game ID!", "404");
         }
 
         return response;

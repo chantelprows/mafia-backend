@@ -21,7 +21,7 @@ public class GameDao {
 
     private static AmazonDynamoDB client = AmazonDynamoDBClientBuilder
             .standard()
-            .withRegion("us-west-2")
+            .withRegion("us-west-1")
             .build();
     private static DynamoDB dynamoDB = new DynamoDB(client);
 
