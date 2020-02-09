@@ -1,7 +1,7 @@
 package request;
 
 public class CreateGameRequest {
-    private String hostName;
+    public String hostName;
 
     public String getHostName() {
         return hostName;

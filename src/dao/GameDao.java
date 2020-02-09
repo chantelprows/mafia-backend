@@ -61,8 +61,6 @@ public class GameDao {
                 .withKeyConditionExpression("#game = :gameId")
                 .withExpressionAttributeNames(attrNames)
                 .withExpressionAttributeValues(attrValues);
-//                .withIndexName(index.getIndexName())
-//                .withLimit(3);
 
         QueryResult result = client.query(query);
         List<Map<String, AttributeValue>> items = result.getItems();

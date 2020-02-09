@@ -3,10 +3,12 @@ package dao;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.*;
+import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
+import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.QueryRequest;
 import com.amazonaws.services.dynamodbv2.model.QueryResult;
-import model.Player;
+import com.amazonaws.services.dynamodbv2.model.ReturnValue;
 import response.AddPlayerResponse;
 
 import java.util.*;
@@ -20,28 +22,38 @@ public class PlayerDao {
     private static final String HostIdAttr = "hostId";
     private static final String GameIdAttr = "gameId";
     private static final String IsHostAttr = "isHost";
+    private static final String SeenRoleAttr = "seenRole";
+    private static final String HasVotedAttr = "hasVoted";
+    private static final String NightRoleAttr = "nightRole";
+    private static final String DayRoleAttr = "dayRole";
+    private static final String CompletedActionAttr = "completedAction";
     private static final String HostNameAttr = "hostName";
 
-    private static AmazonDynamoDB amazonDynamoDB = AmazonDynamoDBClientBuilder
+    private static AmazonDynamoDB client = AmazonDynamoDBClientBuilder
             .standard()
             .withRegion("us-west-1")
             .build();
-    private static DynamoDB dynamoDB = new DynamoDB(amazonDynamoDB);
+    private static DynamoDB dynamoDB = new DynamoDB(client);
+    Table playerTable = dynamoDB.getTable(PlayerTable);
 
     public void addHost(String hostName, String hostId, String gameId) {
-        Table table = dynamoDB.getTable(PlayerTable);
 
 
         Item item = new Item()
                 .withPrimaryKey(PlayerIdAttr, hostId, GameIdAttr, gameId)
                 .withString(PlayerNameAttr, hostName)
-                .withBoolean(IsHostAttr, true);
+                .withString(NightRoleAttr, "tbd")
+                .withString(DayRoleAttr, "tbd")
+                .withBoolean(IsHostAttr, true)
+                .withBoolean(SeenRoleAttr, false)
+                .withBoolean(CompletedActionAttr, false)
+                .withBoolean(HasVotedAttr, false);
 
-        table.putItem(item);
+        playerTable.putItem(item);
     }
 
     public AddPlayerResponse addPlayer(String playerName, String gameId) {
-        Table table = dynamoDB.getTable(PlayerTable);
+        //Table table = dynamoDB.getTable(PlayerTable);
         AddPlayerResponse response;
         GameDao gameDao = new GameDao();
         String playerId = UUID.randomUUID().toString().substring(0, 8);
@@ -51,10 +63,15 @@ public class PlayerDao {
             Item item = new Item()
                     .withPrimaryKey(PlayerIdAttr, playerId, GameIdAttr, gameId)
                     .withString(PlayerNameAttr, playerName)
-                    .withBoolean(IsHostAttr, false);
+                    .withString(NightRoleAttr, "tbd")
+                    .withString(DayRoleAttr, "tbd")
+                    .withBoolean(IsHostAttr, false)
+                    .withBoolean(SeenRoleAttr, false)
+                    .withBoolean(CompletedActionAttr, false)
+                    .withBoolean(HasVotedAttr, false);
 
             try {
-                table.putItem(item);
+                playerTable.putItem(item);
                 response = new AddPlayerResponse(playerId, gameId, playerName);
             }
             catch (Exception ex) {
@@ -67,4 +84,67 @@ public class PlayerDao {
 
         return response;
     }
+
+    public ArrayList<String> getPlayers(String gameId) {
+
+        Index index = playerTable.getIndex("gameId-index");
+        Map<String, String> attrNames = new HashMap<>();
+        attrNames.put("#game", GameIdAttr);
+
+        Map<String, AttributeValue> attrValues = new HashMap<>();
+        attrValues.put(":gameId", new AttributeValue().withS(gameId));
+
+        QueryRequest query = new QueryRequest()
+                .withTableName(PlayerTable)
+                .withKeyConditionExpression("#game = :gameId")
+                .withExpressionAttributeNames(attrNames)
+                .withExpressionAttributeValues(attrValues)
+                .withIndexName(index.getIndexName());
+
+        QueryResult result = client.query(query);
+        List<Map<String, AttributeValue>> items = result.getItems();
+        String playerId;
+        ArrayList<String> players = new ArrayList<>();
+
+
+        if (items != null) {
+            for (Map<String, AttributeValue> item: items) {
+                playerId = item.get(PlayerIdAttr).getS();
+                players.add(playerId);
+            }
+        }
+
+        return players;
+
+    }
+
+    public Boolean giveRole(String playerId, String role, String type) {
+
+//        UpdateItemSpec update;
+////
+////        if (type.equals("day")) {
+////            update = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, playerId)
+////                    .withUpdateExpression("set dayRole=:p")
+////                    .withValueMap(new ValueMap()
+////                            .withString(":p", role))
+////                    .withReturnValues(ReturnValue.UPDATED_NEW);
+////        }
+////        else {
+////            update = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, playerId)
+////                    .withUpdateExpression("set nightRole=:c")
+////                    .withValueMap(new ValueMap()
+////                            .withString(":c", role))
+////                    .withReturnValues(ReturnValue.UPDATED_NEW);
+////        }
+////        try {
+////            playerTable.updateItem(update);
+////            return true;
+////        }
+////        catch (Exception ex) {
+////            return false;
+////        }
+        return true;
+
+    }
+
 }
