@@ -9,6 +9,7 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.QueryRequest;
 import com.amazonaws.services.dynamodbv2.model.QueryResult;
 import com.amazonaws.services.dynamodbv2.model.ReturnValue;
+import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import response.AddPlayerResponse;
 
 import java.util.*;
@@ -118,32 +119,32 @@ public class PlayerDao {
 
     }
 
-    public Boolean giveRole(String playerId, String role, String type) {
+    public Boolean giveRole(String playerId, String role, String type, String gameId) {
 
-//        UpdateItemSpec update;
-////
-////        if (type.equals("day")) {
-////            update = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, playerId)
-////                    .withUpdateExpression("set dayRole=:p")
-////                    .withValueMap(new ValueMap()
-////                            .withString(":p", role))
-////                    .withReturnValues(ReturnValue.UPDATED_NEW);
-////        }
-////        else {
-////            update = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, playerId)
-////                    .withUpdateExpression("set nightRole=:c")
-////                    .withValueMap(new ValueMap()
-////                            .withString(":c", role))
-////                    .withReturnValues(ReturnValue.UPDATED_NEW);
-////        }
-////        try {
-////            playerTable.updateItem(update);
-////            return true;
-////        }
-////        catch (Exception ex) {
-////            return false;
-////        }
-        return true;
+        playerTable = dynamoDB.getTable(PlayerTable);
+        UpdateItemSpec update;
+
+        if (type.equals("day")) {
+            update = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, playerId, GameIdAttr, gameId)
+                    .withUpdateExpression("set dayRole=:d")
+                    .withValueMap(new ValueMap()
+                            .withString(":d", role))
+                    .withReturnValues(ReturnValue.UPDATED_NEW);
+        }
+        else {
+            update = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, playerId, GameIdAttr, gameId)
+                    .withUpdateExpression("set nightRole=:n")
+                    .withValueMap(new ValueMap()
+                            .withString(":n", role))
+                    .withReturnValues(ReturnValue.UPDATED_NEW);
+        }
+        try {
+            playerTable.updateItem(update);
+            return true;
+        }
+        catch (Exception ex) {
+            return false;
+        }
 
     }
 

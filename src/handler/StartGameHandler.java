@@ -15,26 +15,38 @@ public class StartGameHandler {
         logger.log("entering startGame");
         StartGameResponse response;
         PlayerDao playerDao = new PlayerDao();
-
+        int numCenterRoles = 3;
         List<String> roles = Arrays.asList(request.getRoles());
         ArrayList<String> players = playerDao.getPlayers(request.getGameId());
+        int numRoles = roles.size();
+        int numPlayers = players.size();
+        boolean error = false;
 
         Collections.shuffle(roles);
 
         int i;
-        for (i = 0; i < players.size(); i++) {
-            logger.log("giving " + players.get(i) + " " + roles.get(i));
-            playerDao.giveRole(players.get(i), roles.get(i), "day");
-            playerDao.giveRole(players.get(i), roles.get(i), "night");
+        for (i = 0; i < numPlayers; i++) {
+            if (!playerDao.giveRole(players.get(i), roles.get(i), "day", request.getGameId())) {
+                error = true;
+            }
+            if (!playerDao.giveRole(players.get(i), roles.get(i), "night", request.getGameId())) {
+                error = true;
+            }
         }
 
-        String[] centerRoles =  new String[3];   //declaring array
+        String[] centerRoles =  new String[numCenterRoles];
 
-        for (int j = 0; i < 3; i++) {
+        for (int j = 0; j < numCenterRoles; j++) {
             centerRoles[j] = roles.get(i);
+            i++;
         }
 
-        response = new StartGameResponse(centerRoles);
+        if (error) {
+            response = new StartGameResponse("Something went wrong while dealing roles!", "500");
+        }
+        else {
+            response = new StartGameResponse(centerRoles);
+        }
 
         logger.log("leaving startGame");
         return response;
