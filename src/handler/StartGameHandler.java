@@ -2,6 +2,7 @@ package handler;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
+import dao.GameDao;
 import dao.PlayerDao;
 import request.StartGameRequest;
 import response.StartGameResponse;
@@ -40,6 +41,9 @@ public class StartGameHandler {
             centerRoles[j] = roles.get(i);
             i++;
         }
+
+        GameDao gameDao = new GameDao();
+        gameDao.gameStarted(request.getGameId());
 
         if (error) {
             response = new StartGameResponse("Something went wrong while dealing roles!", "500");

@@ -3,10 +3,7 @@ package dao;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.*;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.QueryRequest;
-import com.amazonaws.services.dynamodbv2.model.QueryResult;
-import model.Game;
+import com.amazonaws.services.dynamodbv2.model.*;
 import response.CreateGameResponse;
 
 import java.util.*;
@@ -33,9 +30,10 @@ public class GameDao {
         String hostId = UUID.randomUUID().toString().substring(0, 8);
 
         Item item = new Item()
-                .withPrimaryKey("gameId", gameId)
-                .withString("hostId", hostId)
-                .withString("hostName", hostName);
+                .withPrimaryKey(GameIdAttr, gameId)
+                .withString(HostIdAttr, hostId)
+                .withString(HostNameAttr, hostName)
+                .withBoolean("hasStarted", false);
 
         try {
             table.putItem(item);
@@ -71,6 +69,15 @@ public class GameDao {
 
         return true;
 
+    }
+
+    public void gameStarted(String gameId) {
+        UpdateItemRequest updateItemRequest = new UpdateItemRequest()
+                .withTableName(GameTable)
+                .addKeyEntry(GameIdAttr, new AttributeValue().withS(gameId))
+                .addAttributeUpdatesEntry("hasStarted", new AttributeValueUpdate().withValue(new AttributeValue().withBOOL(true)));
+
+        client.updateItem(updateItemRequest);
     }
 
 }
