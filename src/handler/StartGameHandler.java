@@ -16,10 +16,11 @@ public class StartGameHandler {
         logger.log("entering startGame");
         StartGameResponse response;
         PlayerDao playerDao = new PlayerDao();
+        GameDao gameDao = new GameDao();
         int numCenterRoles = 3;
         List<String> roles = Arrays.asList(request.getRoles());
         ArrayList<String> players = playerDao.getPlayers(request.getGameId());
-        int numRoles = roles.size();
+        String message = null;
         int numPlayers = players.size();
         boolean error = false;
 
@@ -42,15 +43,16 @@ public class StartGameHandler {
             i++;
         }
 
-        GameDao gameDao = new GameDao();
-        gameDao.gameStarted(request.getGameId());
-
         if (error) {
             response = new StartGameResponse("Something went wrong while dealing roles!", "500");
+            return response;
         }
         else {
-            response = new StartGameResponse(centerRoles);
+            message = gameDao.initializePile(centerRoles, request.getGameId());
+            response = new StartGameResponse(message);
         }
+
+        gameDao.gameStarted(request.getGameId());
 
         logger.log("leaving startGame");
         return response;
