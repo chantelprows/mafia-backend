@@ -3,12 +3,10 @@ package dao;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.*;
+import com.amazonaws.services.dynamodbv2.document.spec.DeleteItemSpec;
 import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.QueryRequest;
-import com.amazonaws.services.dynamodbv2.model.QueryResult;
-import com.amazonaws.services.dynamodbv2.model.ReturnValue;
+import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import response.AddPlayerResponse;
 
@@ -152,6 +150,66 @@ public class PlayerDao {
             return false;
         }
 
+    }
+
+    public Boolean leaveGame(String playerId, String gameId) {
+
+        DeleteItemSpec deleteItem = new DeleteItemSpec()
+                .withPrimaryKey(new PrimaryKey(PlayerIdAttr, playerId, GameIdAttr, gameId));
+
+        // Conditional delete (we expect this to fail)
+
+        try {
+            playerTable.deleteItem(deleteItem);
+            return true;
+        }
+        catch (Exception e) {
+            return false;
+        }
+
+    }
+
+    public Boolean clearLobby(String gameId) {
+        // delete all player table items with associated gameId
+        ArrayList<String> playerIds = getPlayers(gameId, false);
+        Boolean result = true;
+
+        for (String playerId: playerIds) {
+
+            if (!leaveGame(playerId, gameId)) {
+                result = false;
+            }
+
+        }
+
+        return result;
+
+
+
+//        TableWriteItems writer = new TableWriteItems(PlayerTable);
+//
+//        PrimaryKey primaryKey = new PrimaryKey(GameIdAttr, gameId);
+//
+//        writer.ke
+//
+//        try {
+//            BatchWriteItemOutcome result = dynamoDB.batchWriteItem();
+//
+//            do {
+//                Map<String, List<WriteRequest>> unprocessedFollower = result.getUnprocessedItems();
+//
+//                if (unprocessedFollower.size() > 0) {
+//                    result = dynamoDB.batchWriteItemUnprocessed(unprocessedFollower);
+//                }
+//
+//            }
+//            while (result.getUnprocessedItems().size() > 0);
+//
+//            return true;
+//        }
+//        catch (Exception ex) {
+//            return false;
+//        }
     }
 
 }

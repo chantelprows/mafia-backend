@@ -3,6 +3,7 @@ package dao;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.*;
+import com.amazonaws.services.dynamodbv2.document.spec.DeleteItemSpec;
 import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
@@ -16,16 +17,18 @@ public class GameDao {
     private static final String GameIdAttr = "gameId";
     private static final String HostIdAttr = "hostId";
     private static final String HostNameAttr = "hostName";
+    private static final String HasStartedAttr = "hasStarted";
     private static final String Role1Attr = "role1";
     private static final String Role2Attr = "role2";
     private static final String Role3Attr = "role3";
+    private static final String PlayerTable = "Player";
 
     private static AmazonDynamoDB client = AmazonDynamoDBClientBuilder
             .standard()
             .withRegion("us-west-1")
             .build();
     private static DynamoDB dynamoDB = new DynamoDB(client);
-    Table gameTable = dynamoDB.getTable(GameTable);
+    private Table gameTable = dynamoDB.getTable(GameTable);
 
     public CreateGameResponse createGame(String hostName) {
         CreateGameResponse response;
@@ -37,7 +40,7 @@ public class GameDao {
                 .withPrimaryKey(GameIdAttr, gameId)
                 .withString(HostIdAttr, hostId)
                 .withString(HostNameAttr, hostName)
-                .withBoolean("hasStarted", false)
+                .withBoolean(HasStartedAttr, false)
                 .withString(Role1Attr, "tbd")
                 .withString(Role2Attr, "tbd")
                 .withString(Role3Attr, "tbd");
@@ -125,6 +128,22 @@ public class GameDao {
         }
 
         return message;
+    }
+
+    public Boolean endGame(String gameId) {
+
+        //first delete game table item
+        DeleteItemSpec deleteItem = new DeleteItemSpec()
+                .withPrimaryKey(new PrimaryKey(GameIdAttr, gameId));
+
+        try {
+            gameTable.deleteItem(deleteItem);
+            return true;
+        }
+        catch (Exception e) {
+            return false;
+        }
+
     }
 
 }
