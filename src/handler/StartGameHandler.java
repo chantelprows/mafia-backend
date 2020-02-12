@@ -19,7 +19,7 @@ public class StartGameHandler {
         GameDao gameDao = new GameDao();
         int numCenterRoles = 3;
         List<String> roles = Arrays.asList(request.getRoles());
-        ArrayList<String> players = playerDao.getPlayers(request.getGameId());
+        ArrayList<String> players = playerDao.getPlayers(request.getGameId(), false);
         String message = null;
         int numPlayers = players.size();
         boolean error = false;

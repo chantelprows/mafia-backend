@@ -86,7 +86,7 @@ public class PlayerDao {
         return response;
     }
 
-    public ArrayList<String> getPlayers(String gameId) {
+    public ArrayList<String> getPlayers(String gameId, boolean getNames) {
 
         Index index = playerTable.getIndex("gameId-index");
         Map<String, String> attrNames = new HashMap<>();
@@ -110,8 +110,14 @@ public class PlayerDao {
 
         if (items != null) {
             for (Map<String, AttributeValue> item: items) {
-                playerId = item.get(PlayerIdAttr).getS();
-                players.add(playerId);
+                if (getNames) {
+                    playerId = item.get(PlayerNameAttr).getS();
+                    players.add(playerId);
+                }
+                else {
+                    playerId = item.get(PlayerIdAttr).getS();
+                    players.add(playerId);
+                }
             }
         }
 

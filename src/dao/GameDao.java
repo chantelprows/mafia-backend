@@ -87,6 +87,13 @@ public class GameDao {
         client.updateItem(updateItemRequest);
     }
 
+    public boolean hasStarted(String gameId) {
+        Table table = dynamoDB.getTable("Game");
+        Item item = table.getItem("gameId", gameId);
+
+        return item.getBoolean("hasStarted");
+    }
+
     public String initializePile(String[] roles, String gameId) {
         String message = null;
 
