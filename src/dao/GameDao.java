@@ -30,7 +30,7 @@ public class GameDao {
     private static DynamoDB dynamoDB = new DynamoDB(client);
     private Table gameTable = dynamoDB.getTable(GameTable);
 
-    public CreateGameResponse createGame(String hostName) {
+    public CreateGameResponse createGame(String hostName) throws Exception {
         CreateGameResponse response;
 
         String gameId = UUID.randomUUID().toString().substring(0, 6);
@@ -50,7 +50,7 @@ public class GameDao {
             response = new CreateGameResponse(hostName, hostId, gameId);
         }
         catch (Exception ex) {
-            response = new CreateGameResponse("Unable to create game!", "500");
+            throw new Exception("Internal Server Error");
         }
 
         return response;
@@ -97,9 +97,7 @@ public class GameDao {
         return item.getBoolean("hasStarted");
     }
 
-    public String initializePile(String[] roles, String gameId) {
-        String message = null;
-
+    public void initializePile(String[] roles, String gameId) throws Exception {
         UpdateItemSpec update1 = new UpdateItemSpec().withPrimaryKey(GameIdAttr, gameId)
                 .withUpdateExpression("set role1=:r")
                 .withValueMap(new ValueMap()
@@ -124,10 +122,8 @@ public class GameDao {
             gameTable.updateItem(update3);
         }
         catch (Exception ex) {
-            message = "Could not initialize pile!";
+            throw new Exception("Internal Server Error");
         }
-
-        return message;
     }
 
     public Boolean endGame(String gameId) {

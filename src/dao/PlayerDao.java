@@ -51,7 +51,7 @@ public class PlayerDao {
         playerTable.putItem(item);
     }
 
-    public AddPlayerResponse addPlayer(String playerName, String gameId) {
+    public AddPlayerResponse addPlayer(String playerName, String gameId) throws Exception {
         //Table table = dynamoDB.getTable(PlayerTable);
         AddPlayerResponse response;
         GameDao gameDao = new GameDao();
@@ -74,11 +74,11 @@ public class PlayerDao {
                 response = new AddPlayerResponse(playerId, gameId, playerName);
             }
             catch (Exception ex) {
-                response = new AddPlayerResponse("Unable to join game!", "500");
+                throw new Exception("Internal Server Error");
             }
         }
         else {
-            response = new AddPlayerResponse("Invalid game ID!", "404");
+            throw new Exception("Game ID not found");
         }
 
         return response;

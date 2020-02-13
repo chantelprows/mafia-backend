@@ -11,16 +11,15 @@ import java.util.*;
 
 public class StartGameHandler {
 
-    public StartGameResponse startGame(StartGameRequest request, Context context) {
+    public StartGameResponse startGame(StartGameRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("entering startGame");
-        StartGameResponse response;
+        StartGameResponse response = new StartGameResponse("Success");
         PlayerDao playerDao = new PlayerDao();
         GameDao gameDao = new GameDao();
         int numCenterRoles = 3;
         List<String> roles = Arrays.asList(request.getRoles());
         ArrayList<String> players = playerDao.getPlayers(request.getGameId(), false);
-        String message = null;
         int numPlayers = players.size();
         boolean error = false;
 
@@ -44,12 +43,10 @@ public class StartGameHandler {
         }
 
         if (error) {
-            response = new StartGameResponse("Something went wrong while dealing roles!", "500");
-            return response;
+            throw new Exception("Internal Server Error");
         }
         else {
-            message = gameDao.initializePile(centerRoles, request.getGameId());
-            response = new StartGameResponse(message);
+            gameDao.initializePile(centerRoles, request.getGameId());
         }
 
         gameDao.gameStarted(request.getGameId());

@@ -12,7 +12,7 @@ public class CreateGameHandler {
     private GameDao gameDao = new GameDao();
     private PlayerDao playerDao = new PlayerDao();
 
-    public CreateGameResponse createGame(CreateGameRequest request, Context context) {
+    public CreateGameResponse createGame(CreateGameRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering startGame");
 

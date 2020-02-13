@@ -8,17 +8,17 @@ import response.LeaveGameResponse;
 
 public class LeaveGameHandler {
 
-    public LeaveGameResponse leaveGame(LeaveGameRequest request, Context context) {
+    public LeaveGameResponse leaveGame(LeaveGameRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering leaveGame");
         PlayerDao playerDao = new PlayerDao();
         LeaveGameResponse response;
 
         if (playerDao.leaveGame(request.getPlayerId(), request.getGameId())) {
-            response = new LeaveGameResponse();
+            response = new LeaveGameResponse("Success");
         }
         else {
-            response = new LeaveGameResponse("Unable to leave game!!", "500");
+            throw new Exception("Internal Server Error");
         }
 
         return response;

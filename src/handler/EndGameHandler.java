@@ -10,18 +10,18 @@ import response.EndGameResponse;
 
 public class EndGameHandler {
 
-    public EndGameResponse endGame(EndGameRequest request, Context context) {
+    public EndGameResponse endGame(EndGameRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering endGame");
-        EndGameResponse response = new EndGameResponse();
+        EndGameResponse response = new EndGameResponse("Success");
         GameDao gameDao = new GameDao();
         PlayerDao playerDao = new PlayerDao();
 
         if (!playerDao.clearLobby(request.getGameId())) {
-            response = new EndGameResponse("Unable to clear lobby!", "500");
+            throw new Exception("Internal Server Error: Clear Lobby Failed");
         }
         if (!gameDao.endGame(request.getGameId())) {
-            response = new EndGameResponse("Unable to end game!", "500");
+            throw new Exception("Internal Server Error: End Game Failed");
         }
 
         return response;

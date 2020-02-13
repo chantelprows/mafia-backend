@@ -5,19 +5,12 @@ public class CreateGameResponse {
     public String hostId;
     public String gameId;
     public String message;
-    public String status;
 
     public CreateGameResponse(String hostName, String hostId, String gameId) {
         this.hostName = hostName;
         this.hostId = hostId;
         this.gameId = gameId;
-        this.status = "200";
         this.message = null;
-    }
-
-    public CreateGameResponse(String message, String status) {
-        this.message = message;
-        this.status = status;
     }
 
     public String getHostName() {
@@ -50,13 +43,5 @@ public class CreateGameResponse {
 
     public void setMessage(String message) {
         this.message = message;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 }

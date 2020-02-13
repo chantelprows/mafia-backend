@@ -11,7 +11,9 @@ public class AddPlayerHandler {
 
     private PlayerDao playerDao = new PlayerDao();
 
-    public AddPlayerResponse addPlayer(AddPlayerRequest request, Context context) {
+
+
+    public AddPlayerResponse addPlayer(AddPlayerRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering addPlayer");
         AddPlayerResponse response;
@@ -21,7 +23,7 @@ public class AddPlayerHandler {
             response = playerDao.addPlayer(request.getPlayerName(), request.getGameId());
         }
         catch (Exception ex) {
-            response = new AddPlayerResponse("Something went wrong!", "500");
+            throw new Exception("Internal Server Error");
         }
 
         return response;
