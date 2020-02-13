@@ -90,11 +90,15 @@ public class GameDao {
         client.updateItem(updateItemRequest);
     }
 
-    public boolean hasStarted(String gameId) {
+    public boolean hasStarted(String gameId) throws Exception {
         Table table = dynamoDB.getTable("Game");
-        Item item = table.getItem("gameId", gameId);
-
-        return item.getBoolean("hasStarted");
+        try {
+            Item item = table.getItem("gameId", gameId);
+            return item.getBoolean("hasStarted");
+        }
+        catch (Exception ex) {
+            throw new Exception("Internal Server Error");
+        }
     }
 
     public void initializePile(String[] roles, String gameId) throws Exception {

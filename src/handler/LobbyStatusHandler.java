@@ -11,7 +11,7 @@ public class LobbyStatusHandler {
     private GameDao gameDao = new GameDao();
     private PlayerDao playerDao = new PlayerDao();
 
-    public LobbyStatusResponse getLobbyStatus(LobbyStatusRequest request, Context context) {
+    public LobbyStatusResponse getLobbyStatus(LobbyStatusRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering getLobbyStatus");
 
