@@ -7,6 +7,7 @@ import com.amazonaws.services.dynamodbv2.document.spec.DeleteItemSpec;
 import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.xspec.S;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import response.AddPlayerResponse;
 
@@ -184,32 +185,42 @@ public class PlayerDao {
 
         return result;
 
+    }
 
+    public String[] getFriends(String gameId, String playerId, String role) {
 
-//        TableWriteItems writer = new TableWriteItems(PlayerTable);
-//
-//        PrimaryKey primaryKey = new PrimaryKey(GameIdAttr, gameId);
-//
-//        writer.ke
-//
-//        try {
-//            BatchWriteItemOutcome result = dynamoDB.batchWriteItem();
-//
-//            do {
-//                Map<String, List<WriteRequest>> unprocessedFollower = result.getUnprocessedItems();
-//
-//                if (unprocessedFollower.size() > 0) {
-//                    result = dynamoDB.batchWriteItemUnprocessed(unprocessedFollower);
-//                }
-//
-//            }
-//            while (result.getUnprocessedItems().size() > 0);
-//
-//            return true;
-//        }
-//        catch (Exception ex) {
-//            return false;
-//        }
+        Index index = playerTable.getIndex("gameId-nightRole-index");
+        Map<String, String> attrNames = new HashMap<>();
+        attrNames.put("#game", GameIdAttr);
+        attrNames.put("#night", NightRoleAttr);
+
+        Map<String, AttributeValue> attrValues = new HashMap<>();
+        attrValues.put(":gameId", new AttributeValue().withS(gameId));
+        attrValues.put(":nightRole", new AttributeValue().withS(role));
+
+        QueryRequest query = new QueryRequest()
+                .withTableName(PlayerTable)
+                .withKeyConditionExpression("#game = :gameId and #night = :nightRole")
+                .withExpressionAttributeNames(attrNames)
+                .withExpressionAttributeValues(attrValues)
+                .withIndexName(index.getIndexName());
+
+        QueryResult result = client.query(query);
+        List<Map<String, AttributeValue>> items = result.getItems();
+        String playerName;
+        ArrayList<String> names = new ArrayList<>();
+
+        if (items.size() > 0) {
+            for (Map<String, AttributeValue> item: items) {
+                if (!item.get(PlayerIdAttr).getS().equals(playerId)) {
+                    playerName = item.get(PlayerNameAttr).getS();
+                    names.add(playerName);
+                }
+            }
+        }
+
+        return names.toArray(new String[0]);
+
     }
 
 }
