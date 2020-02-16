@@ -1,6 +1,6 @@
 package request;
 
-public class HasFriendsRequest {
+public class GetFriendsRequest {
     public String gameId;
     public String playerId;
     public String role;

@@ -3,23 +3,23 @@ package handler;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import dao.PlayerDao;
-import request.HasFriendsRequest;
-import response.HasFriendsResponse;
+import request.GetFriendsRequest;
+import response.GetFriendsResponse;
 
-public class HasFriendsHandler {
+public class GetFriendsHandler {
 
-    public HasFriendsResponse hasFriends(HasFriendsRequest request, Context context) {
+    public GetFriendsResponse getFriends(GetFriendsRequest request, Context context) {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering hasFriends");
         PlayerDao playerDao = new PlayerDao();
         String[] friends = playerDao.getFriends(request.getGameId(), request.getPlayerId(), request.getRole());
-        HasFriendsResponse response;
+        GetFriendsResponse response;
 
         if (friends == null) {
-            response = new HasFriendsResponse();
+            response = new GetFriendsResponse();
         }
         else {
-            response = new HasFriendsResponse(friends);
+            response = new GetFriendsResponse(friends);
         }
 
         return  response;

@@ -1,13 +1,13 @@
 package response;
 
-public class HasFriendsResponse {
+public class GetFriendsResponse {
     public String[] friends;
 
-    public HasFriendsResponse(String[] friends) {
+    public GetFriendsResponse(String[] friends) {
         this.friends = friends;
     }
 
-    public HasFriendsResponse() {
+    public GetFriendsResponse() {
         this.friends = null;
     }
 }
