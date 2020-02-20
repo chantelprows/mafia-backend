@@ -9,6 +9,7 @@ import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.dynamodbv2.xspec.S;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
+import exception.PlayerException;
 import response.AddPlayerResponse;
 
 import java.util.*;
@@ -27,6 +28,7 @@ public class PlayerDao {
     private static final String NightRoleAttr = "nightRole";
     private static final String DayRoleAttr = "dayRole";
     private static final String CompletedActionAttr = "completedAction";
+    private static final String VotesAgainstAttr = "votesAgainst";
     private static final String HostNameAttr = "hostName";
 
     private static AmazonDynamoDB client = AmazonDynamoDBClientBuilder
@@ -37,7 +39,6 @@ public class PlayerDao {
     Table playerTable = dynamoDB.getTable(PlayerTable);
 
     public void addHost(String hostName, String hostId, String gameId) {
-
 
         Item item = new Item()
                 .withPrimaryKey(PlayerIdAttr, hostId, GameIdAttr, gameId)
@@ -60,6 +61,12 @@ public class PlayerDao {
 
         if (gameDao.isGame(gameId)) {
 
+            if (isNameTaken(playerName, gameId)) {
+                throw new PlayerException("This name is already taken. Pick another!");
+            }
+
+            List<String> votes = new ArrayList<>();
+
             Item item = new Item()
                     .withPrimaryKey(PlayerIdAttr, playerId, GameIdAttr, gameId)
                     .withString(PlayerNameAttr, playerName)
@@ -68,6 +75,7 @@ public class PlayerDao {
                     .withBoolean(IsHostAttr, false)
                     .withBoolean(SeenRoleAttr, false)
                     .withBoolean(CompletedActionAttr, false)
+                    .withList(VotesAgainstAttr, votes)
                     .withBoolean(HasVotedAttr, false);
 
             try {
@@ -75,14 +83,46 @@ public class PlayerDao {
                 response = new AddPlayerResponse(playerId, gameId, playerName);
             }
             catch (Exception ex) {
-                throw new Exception("Internal Server Error");
+                throw new PlayerException("Internal Server Error");
             }
         }
         else {
-            throw new Exception("Game ID not found");
+            throw new PlayerException("Game ID not found");
         }
 
         return response;
+    }
+
+    Boolean isNameTaken(String playerName, String gameId) {
+
+        Index index = playerTable.getIndex("gameId-playerName-index");
+        Map<String, String> attrNames = new HashMap<>();
+        attrNames.put("#game", GameIdAttr);
+        attrNames.put("#name", PlayerNameAttr);
+
+        Map<String, AttributeValue> attrValues = new HashMap<>();
+        attrValues.put(":gameId", new AttributeValue().withS(gameId));
+        attrValues.put(":playerName", new AttributeValue().withS(playerName));
+
+        QueryRequest query = new QueryRequest()
+                .withTableName(PlayerTable)
+                .withKeyConditionExpression("#game = :gameId and #name = :playerName")
+                .withExpressionAttributeNames(attrNames)
+                .withExpressionAttributeValues(attrValues)
+                .withIndexName(index.getIndexName());
+
+        QueryResult result = client.query(query);
+        List<Map<String, AttributeValue>> items = result.getItems();
+        String existingName;
+        ArrayList<String> players = new ArrayList<>();
+
+
+        if (items != null) {
+            for (Map<String, AttributeValue> item: items) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public ArrayList<String> getPlayers(String gameId, boolean getNames) {
