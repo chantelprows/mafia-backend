@@ -6,8 +6,4 @@ public class RevealCenterRoleResponse {
     public RevealCenterRoleResponse(String role) {
         this.role = role;
     }
-
-    public RevealCenterRoleResponse() {
-        this.role = null;
-    }
 }

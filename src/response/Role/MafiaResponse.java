@@ -6,8 +6,4 @@ public class MafiaResponse {
     public MafiaResponse(String role) {
         this.role = role;
     }
-
-    public MafiaResponse() {
-        this.role = null;
-    }
 }
