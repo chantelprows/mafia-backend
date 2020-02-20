@@ -101,6 +101,26 @@ public class GameDao {
         }
     }
 
+    public String getCenterRole(int roleNum, String gameId) throws Exception {
+        Table table = dynamoDB.getTable("Game");
+        Item item = table.getItem("gameId", gameId);
+
+        try {
+            if (roleNum == 1) {
+                return item.getString("role1");
+            }
+            else if (roleNum == 2) {
+                return item.getString("role2");
+            }
+            else {
+                return item.getString("role3");
+            }
+        }
+        catch (Exception ex) {
+            throw new Exception("Internal Server Error");
+        }
+    }
+
     public void initializePile(String[] roles, String gameId) throws Exception {
         UpdateItemSpec update1 = new UpdateItemSpec().withPrimaryKey(GameIdAttr, gameId)
                 .withUpdateExpression("set role1=:r")
