@@ -22,6 +22,6 @@ public class GetFriendsHandler {
             response = new GetFriendsResponse(friends);
         }
 
-        return  response;
+        return response;
     }
 }
