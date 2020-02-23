@@ -264,7 +264,7 @@ public class PlayerDao {
 
     }
 
-    public String getRole(String gameId, String playerId, Context context) {
+    public String getRole(String gameId, String playerId) {
         Table table = dynamoDB.getTable(PlayerTable);
         Item item = table.getItem("playerId", playerId, "gameId", gameId);
 

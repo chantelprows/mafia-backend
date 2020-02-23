@@ -14,7 +14,7 @@ public class GetRoleHandler {
         logger.log("Entering getRole");
 
         GetRoleResponse response = new GetRoleResponse();
-        response.setRole(playerDao.getRole(request.getGameId(), request.getPlayerId(), context));
+        response.setRole(playerDao.getRole(request.getGameId(), request.getPlayerId()));
 
         return response;
     }
