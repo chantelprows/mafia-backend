@@ -8,6 +8,7 @@ import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.dynamodbv2.xspec.S;
+import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import exception.PlayerException;
 import response.AddPlayerResponse;
@@ -261,6 +262,13 @@ public class PlayerDao {
 
         return names.toArray(new String[0]);
 
+    }
+
+    public String getRole(String gameId, String playerId, Context context) {
+        Table table = dynamoDB.getTable(PlayerTable);
+        Item item = table.getItem("playerId", playerId, "gameId", gameId);
+
+        return item.getString("dayRole");
     }
 
 }
