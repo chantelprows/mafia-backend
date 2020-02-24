@@ -58,7 +58,7 @@ public class PlayerDao {
         //Table table = dynamoDB.getTable(PlayerTable);
         AddPlayerResponse response;
         GameDao gameDao = new GameDao();
-        String playerId = UUID.randomUUID().toString().substring(0, 8);
+        String playerId = UUID.randomUUID().toString().substring(0, 6);
 
         if (gameDao.isGame(gameId)) {
 
