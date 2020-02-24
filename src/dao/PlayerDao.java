@@ -270,6 +270,13 @@ public class PlayerDao {
 
     }
 
+    public String getRole(String gameId, String playerId) {
+        Table table = dynamoDB.getTable(PlayerTable);
+        Item item = table.getItem("playerId", playerId, "gameId", gameId);
+
+        return item.getString("dayRole");
+    }
+
     public void vote(String voterId, String voteeId, String gameId) throws PlayerException {
 
         Item voteeItem = playerTable.getItem(PlayerIdAttr, voteeId, GameIdAttr, gameId);
