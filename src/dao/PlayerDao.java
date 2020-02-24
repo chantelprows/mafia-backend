@@ -8,7 +8,6 @@ import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.dynamodbv2.xspec.S;
-import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import exception.PlayerException;
 import response.AddPlayerResponse;
@@ -25,7 +24,7 @@ public class PlayerDao {
     private static final String GameIdAttr = "gameId";
     private static final String IsHostAttr = "isHost";
     private static final String SeenRoleAttr = "seenRole";
-    private static final String HasVotedAttr = "hasVoted";
+    private static final String VotedForAttr = "votedFor";
     private static final String NightRoleAttr = "nightRole";
     private static final String DayRoleAttr = "dayRole";
     private static final String CompletedActionAttr = "completedAction";
@@ -37,10 +36,11 @@ public class PlayerDao {
             .withRegion("us-west-1")
             .build();
     private static DynamoDB dynamoDB = new DynamoDB(client);
-    Table playerTable = dynamoDB.getTable(PlayerTable);
+    private static Table playerTable = dynamoDB.getTable(PlayerTable);
 
-    public void addHost(String hostName, String hostId, String gameId) {
+    public void addHost(String hostName, String hostId, String gameId) throws PlayerException {
 
+        List<String> votes = new ArrayList<>();
         Item item = new Item()
                 .withPrimaryKey(PlayerIdAttr, hostId, GameIdAttr, gameId)
                 .withString(PlayerNameAttr, hostName)
@@ -49,9 +49,15 @@ public class PlayerDao {
                 .withBoolean(IsHostAttr, true)
                 .withBoolean(SeenRoleAttr, false)
                 .withBoolean(CompletedActionAttr, false)
-                .withBoolean(HasVotedAttr, false);
+                .withList(VotesAgainstAttr, votes)
+                .withString(VotedForAttr, "n/a");
 
-        playerTable.putItem(item);
+        try {
+            playerTable.putItem(item);
+        }
+        catch (Exception ex) {
+            throw new PlayerException("Unable to add host");
+        }
     }
 
     public AddPlayerResponse addPlayer(String playerName, String gameId) throws Exception {
@@ -77,7 +83,7 @@ public class PlayerDao {
                     .withBoolean(SeenRoleAttr, false)
                     .withBoolean(CompletedActionAttr, false)
                     .withList(VotesAgainstAttr, votes)
-                    .withBoolean(HasVotedAttr, false);
+                    .withString(VotedForAttr, "n/a");
 
             try {
                 playerTable.putItem(item);
@@ -114,8 +120,8 @@ public class PlayerDao {
 
         QueryResult result = client.query(query);
         List<Map<String, AttributeValue>> items = result.getItems();
-        String existingName;
-        ArrayList<String> players = new ArrayList<>();
+//        String existingName;
+//        ArrayList<String> players = new ArrayList<>();
 
 
         if (items != null) {
@@ -264,11 +270,32 @@ public class PlayerDao {
 
     }
 
-    public String getRole(String gameId, String playerId) {
-        Table table = dynamoDB.getTable(PlayerTable);
-        Item item = table.getItem("playerId", playerId, "gameId", gameId);
+    public void vote(String voterId, String voteeId, String gameId) throws PlayerException {
 
-        return item.getString("dayRole");
+        Item voteeItem = playerTable.getItem(PlayerIdAttr, voteeId, GameIdAttr, gameId);
+        Item voterItem = playerTable.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
+        List<Object> votes = voteeItem.getList(VotesAgainstAttr);
+        UpdateItemSpec update1 = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, voterId, GameIdAttr, gameId)
+                .withUpdateExpression("set votedFor=:d")
+                .withValueMap(new ValueMap()
+                        .withString(":d", voteeItem.getString(PlayerNameAttr)))
+                .withReturnValues(ReturnValue.UPDATED_NEW);
+
+        votes.add(voterItem.getString(PlayerNameAttr));
+        UpdateItemSpec update2 = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, voteeId, GameIdAttr, gameId)
+                .withUpdateExpression("set votesAgainst=:d")
+                .withValueMap(new ValueMap()
+                        .withList(":d", votes))
+                .withReturnValues(ReturnValue.UPDATED_NEW);
+
+        try {
+            playerTable.updateItem(update1);
+            playerTable.updateItem(update2);
+        }
+        catch (Exception ex) {
+            throw new PlayerException("Unable to vote!");
+        }
+
     }
 
 }
