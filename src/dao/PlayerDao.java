@@ -277,6 +277,36 @@ public class PlayerDao {
         return item.getString("dayRole");
     }
 
+    public List<String> getAllRoles(String gameId) {
+        Index index = playerTable.getIndex("gameId-index");
+        Map<String, String> attrNames = new HashMap<>();
+        attrNames.put("#game", GameIdAttr);
+
+        Map<String, AttributeValue> attrValues = new HashMap<>();
+        attrValues.put(":gameId", new AttributeValue().withS(gameId));
+
+        QueryRequest query = new QueryRequest()
+                .withTableName(PlayerTable)
+                .withKeyConditionExpression("#game = :gameId")
+                .withExpressionAttributeNames(attrNames)
+                .withExpressionAttributeValues(attrValues)
+                .withIndexName(index.getIndexName());
+
+        QueryResult result = client.query(query);
+        List<Map<String, AttributeValue>> items = result.getItems();
+        String role;
+        List<String> roles = new ArrayList<>();
+
+        if (items.size() > 0) {
+            for (Map<String, AttributeValue> item: items) {
+                    role = item.get("dayRole").getS();
+                    roles.add(role);
+            }
+        }
+
+        return roles;
+    }
+
     public void vote(String voterId, String voteeId, String gameId) throws PlayerException {
 
         Item voteeItem = playerTable.getItem(PlayerIdAttr, voteeId, GameIdAttr, gameId);
