@@ -10,46 +10,13 @@ import response.StartGameResponse;
 import java.util.*;
 
 public class StartGameHandler {
+    GameDao gameDao = new GameDao();
 
     public StartGameResponse startGame(StartGameRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("entering startGame");
-        StartGameResponse response = new StartGameResponse("Success");
-        PlayerDao playerDao = new PlayerDao();
-        GameDao gameDao = new GameDao();
-        int numCenterRoles = 3;
-        List<String> roles = Arrays.asList(request.getRoles());
-        ArrayList<String> players = playerDao.getPlayers(request.getGameId(), false);
-        int numPlayers = players.size();
-        boolean error = false;
-
-        Collections.shuffle(roles);
-
-        int i;
-        for (i = 0; i < numPlayers; i++) {
-            if (!playerDao.giveRole(players.get(i), roles.get(i), "day", request.getGameId())) {
-                error = true;
-            }
-            if (!playerDao.giveRole(players.get(i), roles.get(i), "night", request.getGameId())) {
-                error = true;
-            }
-        }
-
-        String[] centerRoles =  new String[numCenterRoles];
-
-        for (int j = 0; j < numCenterRoles; j++) {
-            centerRoles[j] = roles.get(i);
-            i++;
-        }
-
-        if (error) {
-            throw new Exception("Internal Server Error");
-        }
-        else {
-            gameDao.initializePile(centerRoles, request.getGameId());
-        }
-
-        gameDao.gameStarted(request.getGameId());
+        StartGameResponse response = new StartGameResponse();
+        gameDao.startGame(request);
 
         logger.log("leaving startGame");
         return response;

@@ -11,4 +11,12 @@ public class StartGameRequest {
     public String[] getRoles() {
         return roles;
     }
+
+    public void setGameId(String gameId) {
+        this.gameId = gameId;
+    }
+
+    public void setRoles(String[] roles) {
+        this.roles = roles;
+    }
 }

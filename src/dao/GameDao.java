@@ -7,7 +7,9 @@ import com.amazonaws.services.dynamodbv2.document.spec.DeleteItemSpec;
 import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
+import request.StartGameRequest;
 import response.CreateGameResponse;
+import response.StartGameResponse;
 
 import java.util.*;
 
@@ -161,6 +163,43 @@ public class GameDao {
         catch (Exception ex) {
             throw new Exception("Internal Server Error");
         }
+    }
+    public void startGame(StartGameRequest request) throws Exception {
+        PlayerDao playerDao = new PlayerDao();
+        GameDao gameDao = new GameDao();
+        int numCenterRoles = 3;
+        List<String> roles = Arrays.asList(request.getRoles());
+        ArrayList<String> players = playerDao.getPlayers(request.getGameId(), false);
+        int numPlayers = players.size();
+        boolean error = false;
+
+        Collections.shuffle(roles);
+
+        int i;
+        for (i = 0; i < numPlayers; i++) {
+            if (!playerDao.giveRole(players.get(i), roles.get(i), "day", request.getGameId())) {
+                error = true;
+            }
+            if (!playerDao.giveRole(players.get(i), roles.get(i), "night", request.getGameId())) {
+                error = true;
+            }
+        }
+
+        String[] centerRoles =  new String[numCenterRoles];
+
+        for (int j = 0; j < numCenterRoles; j++) {
+            centerRoles[j] = roles.get(i);
+            i++;
+        }
+
+        if (error) {
+            throw new Exception("Internal Server Error");
+        }
+        else {
+            gameDao.initializePile(centerRoles, request.getGameId());
+        }
+
+        gameDao.gameStarted(request.getGameId());
     }
 
     public Boolean endGame(String gameId) {
