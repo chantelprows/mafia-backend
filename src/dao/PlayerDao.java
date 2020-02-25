@@ -330,7 +330,7 @@ public class PlayerDao {
             playerTable.updateItem(update2);
         }
         catch (Exception ex) {
-            throw new PlayerException("Unable to vote!");
+            throw new PlayerException("Internal Server Error: Unable to vote!");
         }
 
     }
@@ -342,6 +342,21 @@ public class PlayerDao {
         String votedFor = item.getString("votedFor");
 
         return !votedFor.equals("n/a");
+    }
+
+    public void completeAction(String playerId, String gameId) throws PlayerException {
+        UpdateItemSpec update = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, playerId, GameIdAttr, gameId)
+                .withUpdateExpression("set completedAction=:d")
+                .withValueMap(new ValueMap()
+                        .withBoolean(":d", true))
+                .withReturnValues(ReturnValue.UPDATED_NEW);
+
+        try {
+            playerTable.updateItem(update);
+        }
+        catch (Exception ex) {
+            throw new PlayerException("Internal Server Error");
+        }
     }
 
 }
