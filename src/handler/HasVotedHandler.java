@@ -11,15 +11,13 @@ import response.LobbyStatusResponse;
 import java.util.ConcurrentModificationException;
 
 public class HasVotedHandler {
-    private GameDao gameDao = new GameDao();
     private PlayerDao playerDao = new PlayerDao();
 
     public HasVotedResponse hasVoted(HasVotedRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering hasVoted");
 
-        HasVotedResponse response = new HasVotedResponse(playerDao.hasVoted(request.getGameId(), request.getPlayerId()));
-
-        return response;
+        logger.log("Leaving hasVoted");
+        return new HasVotedResponse(playerDao.hasVoted(request.getGameId(), request.getPlayerId()));
     }
 }
