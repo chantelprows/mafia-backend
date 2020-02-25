@@ -305,4 +305,13 @@ public class PlayerDao {
 
     }
 
+    public boolean hasVoted(String gameId, String voterId) throws Exception {
+        Table table = dynamoDB.getTable(PlayerTable);
+        Item item = table.getItem("playerId", voterId, "gameId", gameId);
+
+        String votedFor = item.getString("votedFor");
+
+        return !votedFor.equals("n/a");
+    }
+
 }
