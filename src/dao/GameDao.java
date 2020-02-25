@@ -56,6 +56,19 @@ public class GameDao {
         return response;
     }
 
+    public List<String> getCenterRoles(String gameId) {
+        Table table = dynamoDB.getTable(GameTable);
+        Item item = table.getItem("gameId", gameId);
+
+        List<String> roles = new ArrayList<>();
+
+        roles.add(item.getString("role1"));
+        roles.add(item.getString("role2"));
+        roles.add(item.getString("role3"));
+
+        return roles;
+    }
+
     public Boolean isGame(String gameId) {
 
         Map<String, String> attrNames = new HashMap<>();
