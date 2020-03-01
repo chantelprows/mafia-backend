@@ -23,7 +23,9 @@ public class GameDao {
     private static final String Role1Attr = "role1";
     private static final String Role2Attr = "role2";
     private static final String Role3Attr = "role3";
+    private static final String KilledAttr = "killed";
     private static final String PlayerTable = "Player";
+    private static final String EmptyValue = "n/a";
 
     private static AmazonDynamoDB client = AmazonDynamoDBClientBuilder
             .standard()
@@ -43,9 +45,10 @@ public class GameDao {
                 .withString(HostIdAttr, hostId)
                 .withString(HostNameAttr, hostName)
                 .withBoolean(HasStartedAttr, false)
-                .withString(Role1Attr, "tbd")
-                .withString(Role2Attr, "tbd")
-                .withString(Role3Attr, "tbd");
+                .withString(Role1Attr, EmptyValue)
+                .withString(Role2Attr, EmptyValue)
+                .withString(Role3Attr, EmptyValue)
+                .withString(KilledAttr, EmptyValue);
 
         try {
             gameTable.putItem(item);

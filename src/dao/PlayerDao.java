@@ -30,6 +30,7 @@ public class PlayerDao {
     private static final String CompletedActionAttr = "completedAction";
     private static final String VotesAgainstAttr = "votesAgainst";
     private static final String HostNameAttr = "hostName";
+    private static final String EmptyValue = "n/a";
 
     private static AmazonDynamoDB client = AmazonDynamoDBClientBuilder
             .standard()
@@ -44,13 +45,13 @@ public class PlayerDao {
         Item item = new Item()
                 .withPrimaryKey(PlayerIdAttr, hostId, GameIdAttr, gameId)
                 .withString(PlayerNameAttr, hostName)
-                .withString(NightRoleAttr, "tbd")
-                .withString(DayRoleAttr, "tbd")
+                .withString(NightRoleAttr, EmptyValue)
+                .withString(DayRoleAttr, EmptyValue)
                 .withBoolean(IsHostAttr, true)
                 .withBoolean(SeenRoleAttr, false)
                 .withBoolean(CompletedActionAttr, false)
                 .withList(VotesAgainstAttr, votes)
-                .withString(VotedForAttr, "n/a");
+                .withString(VotedForAttr, EmptyValue);
 
         try {
             playerTable.putItem(item);
@@ -77,13 +78,13 @@ public class PlayerDao {
             Item item = new Item()
                     .withPrimaryKey(PlayerIdAttr, playerId, GameIdAttr, gameId)
                     .withString(PlayerNameAttr, playerName)
-                    .withString(NightRoleAttr, "tbd")
-                    .withString(DayRoleAttr, "tbd")
+                    .withString(NightRoleAttr, EmptyValue)
+                    .withString(DayRoleAttr, EmptyValue)
                     .withBoolean(IsHostAttr, false)
                     .withBoolean(SeenRoleAttr, false)
                     .withBoolean(CompletedActionAttr, false)
                     .withList(VotesAgainstAttr, votes)
-                    .withString(VotedForAttr, "n/a");
+                    .withString(VotedForAttr, EmptyValue);
 
             try {
                 playerTable.putItem(item);
@@ -272,9 +273,23 @@ public class PlayerDao {
 
     public String getRole(String gameId, String playerId) {
         Table table = dynamoDB.getTable(PlayerTable);
-        Item item = table.getItem("playerId", playerId, "gameId", gameId);
+        Item item = table.getItem(PlayerIdAttr, playerId, GameIdAttr, gameId);
 
-        return item.getString("dayRole");
+        return item.getString(DayRoleAttr);
+    }
+
+    public String getNightRole(String gameId, String playerId) {
+        Table table = dynamoDB.getTable(PlayerTable);
+        Item item = table.getItem(PlayerIdAttr, playerId, GameIdAttr, gameId);
+
+        return item.getString(NightRoleAttr);
+    }
+
+    public List<Object> getVotesAgainst(String gameId, String playerId) {
+        Table table = dynamoDB.getTable(PlayerTable);
+        Item item = table.getItem(PlayerIdAttr, playerId, GameIdAttr, gameId);
+
+        return item.getList(VotesAgainstAttr);
     }
 
     public List<String> getAllRoles(String gameId) {
@@ -299,7 +314,7 @@ public class PlayerDao {
 
         if (items.size() > 0) {
             for (Map<String, AttributeValue> item: items) {
-                    role = item.get("dayRole").getS();
+                    role = item.get(DayRoleAttr).getS();
                     roles.add(role);
             }
         }
@@ -337,14 +352,28 @@ public class PlayerDao {
 
     public boolean hasVoted(String gameId, String voterId) throws Exception {
         Table table = dynamoDB.getTable(PlayerTable);
-        Item item = table.getItem("playerId", voterId, "gameId", gameId);
+        Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
 
-        String votedFor = item.getString("votedFor");
+        String votedFor = item.getString(VotedForAttr);
 
-        return !votedFor.equals("n/a");
+        return !votedFor.equals(EmptyValue);
     }
 
-    public void completeAction(String playerId, String gameId) throws PlayerException {
+    public boolean hasCompletedAction(String gameId, String voterId) throws Exception {
+        Table table = dynamoDB.getTable(PlayerTable);
+        Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
+
+        return item.getBoolean(CompletedActionAttr);
+    }
+
+    public boolean hasSeenRole(String gameId, String voterId) throws Exception {
+        Table table = dynamoDB.getTable(PlayerTable);
+        Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
+
+        return item.getBoolean(SeenRoleAttr);
+    }
+
+    public void completeAction(String gameId, String playerId) throws PlayerException {
         UpdateItemSpec update = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, playerId, GameIdAttr, gameId)
                 .withUpdateExpression("set completedAction=:d")
                 .withValueMap(new ValueMap()
