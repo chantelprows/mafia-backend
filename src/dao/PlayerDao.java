@@ -359,6 +359,13 @@ public class PlayerDao {
         return !votedFor.equals(EmptyValue);
     }
 
+    public String getVote(String gameId, String voterId) throws Exception {
+        Table table = dynamoDB.getTable(PlayerTable);
+        Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
+
+        return item.getString(VotedForAttr);
+    }
+
     public boolean hasCompletedAction(String gameId, String voterId) throws Exception {
         Table table = dynamoDB.getTable(PlayerTable);
         Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
@@ -371,6 +378,13 @@ public class PlayerDao {
         Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
 
         return item.getBoolean(SeenRoleAttr);
+    }
+
+    public boolean isHost(String gameId, String voterId) throws Exception {
+        Table table = dynamoDB.getTable(PlayerTable);
+        Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
+
+        return item.getBoolean(IsHostAttr);
     }
 
     public void completeAction(String gameId, String playerId) throws PlayerException {
@@ -386,6 +400,82 @@ public class PlayerDao {
         catch (Exception ex) {
             throw new PlayerException("Internal Server Error");
         }
+    }
+
+    public String countVotes(String gameId) throws Exception {
+
+        ArrayList<String> playerIds = getPlayers(gameId, false);
+
+        TreeMap<Integer, ArrayList<String>> map = new TreeMap<>();
+
+        for (String playerId: playerIds) {
+            String votedFor = getVote(gameId, playerId);
+
+            if (mapContains(map, votedFor)) {
+                Integer numVotes;
+                for (Map.Entry<Integer, ArrayList<String>> entry : map.entrySet()) {
+                    if (entry.getValue().contains(votedFor)) {
+                        numVotes = entry.getKey();
+                        ArrayList<String> oldList = map.get(numVotes);
+                        oldList.remove(votedFor);
+                        numVotes++;
+                        if (map.containsKey(numVotes)) {
+                            ArrayList<String> newList = map.get(numVotes);
+                            newList.add(votedFor);
+                            map.put(numVotes, newList);
+                        }
+                        else {
+                            ArrayList<String> names = new ArrayList<>();
+                            names.add(votedFor);
+                            map.put(numVotes, names);
+                        }
+                        break;
+                    }
+                }
+
+            }
+            else {
+                ArrayList<String> names = new ArrayList<>();
+                names.add(votedFor);
+                map.put(1, names);
+            }
+        }
+
+        if (map.get(map.lastKey()).size() > 1) {
+            return calculateLoser(map.get(map.lastKey()), gameId);
+        }
+        return map.get(map.lastKey()).get(0);
+    }
+
+    private boolean mapContains(Map<Integer, ArrayList<String>> map, String name) {
+        for (Map.Entry<Integer, ArrayList<String>> entry : map.entrySet()) {
+            if (entry.getValue().contains(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String calculateLoser(ArrayList<String> playerNames, String gameId) {
+        
+        ArrayList<String> allPlayers = getPlayers(gameId, false);
+        String deadPlayer = playerNames.get(0);
+
+        for (String playerId: allPlayers) {
+            Table table = dynamoDB.getTable(PlayerTable);
+            Item item = table.getItem(PlayerIdAttr, playerId, GameIdAttr, gameId);
+
+            if (playerNames.contains(item.getString(PlayerNameAttr))) {
+
+                if (item.getString(DayRoleAttr).equals("mafia")) {
+                    deadPlayer = item.getString(PlayerNameAttr);
+                    break;
+                }
+
+            }
+        }
+
+        return deadPlayer;
     }
 
 }
