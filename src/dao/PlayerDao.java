@@ -350,6 +350,7 @@ public class PlayerDao {
 
     }
 
+
     public boolean hasVoted(String gameId, String voterId) throws Exception {
         Table table = dynamoDB.getTable(PlayerTable);
         Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
@@ -387,7 +388,7 @@ public class PlayerDao {
         return item.getBoolean(IsHostAttr);
     }
 
-    public void completeAction(String gameId, String playerId) throws PlayerException {
+    public boolean completeAction(String gameId, String playerId) throws PlayerException {
         UpdateItemSpec update = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, playerId, GameIdAttr, gameId)
                 .withUpdateExpression("set completedAction=:d")
                 .withValueMap(new ValueMap()
@@ -400,6 +401,42 @@ public class PlayerDao {
         catch (Exception ex) {
             throw new PlayerException("Internal Server Error");
         }
+        return isLastAction(gameId);
+    }
+
+    public boolean isLastAction(String gameId) {
+
+        GameDao gameDao = new GameDao();
+        Index index = playerTable.getIndex("gameId-index");
+        Map<String, String> attrNames = new HashMap<>();
+        attrNames.put("#game", GameIdAttr);
+
+        Map<String, AttributeValue> attrValues = new HashMap<>();
+        attrValues.put(":gameId", new AttributeValue().withS(gameId));
+
+        QueryRequest query = new QueryRequest()
+                .withTableName(PlayerTable)
+                .withKeyConditionExpression("#game = :gameId")
+                .withExpressionAttributeNames(attrNames)
+                .withExpressionAttributeValues(attrValues)
+                .withIndexName(index.getIndexName());
+
+        QueryResult result = client.query(query);
+        List<Map<String, AttributeValue>> items = result.getItems();
+        String playerId;
+        ArrayList<String> players = new ArrayList<>();
+
+
+        if (items != null) {
+            for (Map<String, AttributeValue> item: items) {
+                if (!item.get(CompletedActionAttr).getBOOL()) {
+                    return false;
+                }
+            }
+        }
+
+        gameDao.markActionsCompleted(gameId);
+        return true;
     }
 
     public String countVotes(String gameId) throws Exception {
@@ -457,7 +494,7 @@ public class PlayerDao {
     }
 
     private String calculateLoser(ArrayList<String> playerNames, String gameId) {
-        
+
         ArrayList<String> allPlayers = getPlayers(gameId, false);
         String deadPlayer = playerNames.get(0);
 

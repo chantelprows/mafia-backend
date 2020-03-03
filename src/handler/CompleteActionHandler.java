@@ -14,9 +14,9 @@ public class CompleteActionHandler {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering completeAction");
 
-        playerDao.completeAction(request.getGameId(), request.getPlayerId());
+        boolean isLast = playerDao.completeAction(request.getGameId(), request.getPlayerId());
 
         logger.log("Leaving completeAction");
-        return new CompleteActionResponse();
+        return new CompleteActionResponse(isLast);
     }
 }

@@ -20,6 +20,7 @@ public class GameDao {
     private static final String HostIdAttr = "hostId";
     private static final String HostNameAttr = "hostName";
     private static final String HasStartedAttr = "hasStarted";
+    private static final String CompletedActionsAttr = "completedActions";
     private static final String Role1Attr = "role1";
     private static final String Role2Attr = "role2";
     private static final String Role3Attr = "role3";
@@ -48,7 +49,8 @@ public class GameDao {
                 .withString(Role1Attr, EmptyValue)
                 .withString(Role2Attr, EmptyValue)
                 .withString(Role3Attr, EmptyValue)
-                .withString(KilledAttr, EmptyValue);
+                .withString(KilledAttr, EmptyValue)
+                .withBoolean(CompletedActionsAttr, false);
 
         try {
             gameTable.putItem(item);
@@ -59,6 +61,26 @@ public class GameDao {
         }
 
         return response;
+    }
+
+    public void markActionsCompleted(String gameId) {
+        UpdateItemRequest updateItemRequest = new UpdateItemRequest()
+                .withTableName(GameTable)
+                .addKeyEntry(GameIdAttr, new AttributeValue().withS(gameId))
+                .addAttributeUpdatesEntry(CompletedActionsAttr, new AttributeValueUpdate().withValue(new AttributeValue().withBOOL(true)));
+
+        client.updateItem(updateItemRequest);
+    }
+
+    public boolean areActionsCompleted(String gameId) throws Exception {
+        Table table = dynamoDB.getTable(GameTable);
+        try {
+            Item item = table.getItem(GameIdAttr, gameId);
+            return item.getBoolean(CompletedActionsAttr);
+        }
+        catch (Exception ex) {
+            throw new Exception("Internal Server Error. Unable to check if all actions are completed.");
+        }
     }
 
     public List<String> getCenterRoles(String gameId) {
