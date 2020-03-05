@@ -4,13 +4,12 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import dao.GameDao;
 import dao.PlayerDao;
-import model.Game;
-import request.EndGameRequest;
+import request.GameRequest;
 import response.EndGameResponse;
 
 public class EndGameHandler {
 
-    public EndGameResponse endGame(EndGameRequest request, Context context) throws Exception {
+    public EndGameResponse endGame(GameRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering endGame");
         EndGameResponse response = new EndGameResponse("Success");

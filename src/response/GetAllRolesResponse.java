@@ -2,7 +2,7 @@ package response;
 
 import java.util.List;
 
-public class GetRoleResponse {
+public class GetAllRolesResponse {
     private String role;
     private List<String> allRoles;
 

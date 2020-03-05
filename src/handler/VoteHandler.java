@@ -5,11 +5,11 @@ package handler;
         import dao.PlayerDao;
         import exception.PlayerException;
         import request.VoteRequest;
-        import response.VoteResponse;
+        import response.EmptyResponse;
 
 public class VoteHandler {
 
-    public VoteResponse vote(VoteRequest request, Context context) throws Exception {
+    public EmptyResponse vote(VoteRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("entering vote");
         PlayerDao playerDao = new PlayerDao();
@@ -21,6 +21,6 @@ public class VoteHandler {
         }
 
         logger.log("leaving vote");
-        return new VoteResponse();
+        return new EmptyResponse();
     }
 }

@@ -3,12 +3,12 @@ package handler;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import dao.PlayerDao;
-import request.LeaveGameRequest;
+import request.PlayerInfoRequest;
 import response.LeaveGameResponse;
 
 public class LeaveGameHandler {
 
-    public LeaveGameResponse leaveGame(LeaveGameRequest request, Context context) throws Exception {
+    public LeaveGameResponse leaveGame(PlayerInfoRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering leaveGame");
         PlayerDao playerDao = new PlayerDao();

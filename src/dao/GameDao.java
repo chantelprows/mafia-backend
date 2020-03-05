@@ -9,7 +9,6 @@ import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.*;
 import request.StartGameRequest;
 import response.CreateGameResponse;
-import response.StartGameResponse;
 
 import java.util.*;
 
@@ -25,6 +24,7 @@ public class GameDao {
     private static final String Role2Attr = "role2";
     private static final String Role3Attr = "role3";
     private static final String KilledAttr = "killed";
+    private static final String ReadyToVoteAttr = "readyToVote";
     private static final String PlayerTable = "Player";
     private static final String EmptyValue = "n/a";
 
@@ -50,7 +50,8 @@ public class GameDao {
                 .withString(Role2Attr, EmptyValue)
                 .withString(Role3Attr, EmptyValue)
                 .withString(KilledAttr, EmptyValue)
-                .withBoolean(CompletedActionsAttr, false);
+                .withBoolean(CompletedActionsAttr, false)
+                .withBoolean(ReadyToVoteAttr, false);
 
         try {
             gameTable.putItem(item);
@@ -72,6 +73,15 @@ public class GameDao {
         client.updateItem(updateItemRequest);
     }
 
+    public void markReadyToVote(String gameId) {
+        UpdateItemRequest updateItemRequest = new UpdateItemRequest()
+                .withTableName(GameTable)
+                .addKeyEntry(GameIdAttr, new AttributeValue().withS(gameId))
+                .addAttributeUpdatesEntry(ReadyToVoteAttr, new AttributeValueUpdate().withValue(new AttributeValue().withBOOL(true)));
+
+        client.updateItem(updateItemRequest);
+    }
+
     public boolean areActionsCompleted(String gameId) throws Exception {
         Table table = dynamoDB.getTable(GameTable);
         try {
@@ -80,6 +90,17 @@ public class GameDao {
         }
         catch (Exception ex) {
             throw new Exception("Internal Server Error. Unable to check if all actions are completed.");
+        }
+    }
+
+    public boolean isReadyToVote(String gameId) throws Exception {
+        Table table = dynamoDB.getTable(GameTable);
+        try {
+            Item item = table.getItem(GameIdAttr, gameId);
+            return item.getBoolean(ReadyToVoteAttr);
+        }
+        catch (Exception ex) {
+            throw new Exception("Internal Server Error. Unable to check if game is ready to vote.");
         }
     }
 

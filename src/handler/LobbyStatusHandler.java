@@ -4,14 +4,14 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import dao.GameDao;
 import dao.PlayerDao;
-import request.LobbyStatusRequest;
+import request.GameRequest;
 import response.LobbyStatusResponse;
 
 public class LobbyStatusHandler {
     private GameDao gameDao = new GameDao();
     private PlayerDao playerDao = new PlayerDao();
 
-    public LobbyStatusResponse getLobbyStatus(LobbyStatusRequest request, Context context) throws Exception {
+    public LobbyStatusResponse getLobbyStatus(GameRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering getLobbyStatus");
 

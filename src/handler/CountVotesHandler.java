@@ -3,15 +3,13 @@ package handler;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import dao.PlayerDao;
-import request.EndGameRequest;
-import request.HasVotedRequest;
+import request.GameRequest;
 import response.CountVotesResponse;
-import response.IsHostResponse;
 
 public class CountVotesHandler {
     private PlayerDao playerDao = new PlayerDao();
 
-    public CountVotesResponse countVotes(EndGameRequest request, Context context) throws Exception {
+    public CountVotesResponse countVotes(GameRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering countVotes");
 

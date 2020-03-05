@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import dao.PlayerDao;
 import exception.PlayerException;
-import model.Player;
 import request.AddPlayerRequest;
 import response.AddPlayerResponse;
 

@@ -3,16 +3,15 @@ package handler;
 import com.amazonaws.services.lambda.runtime.Context;
 import dao.GameDao;
 import dao.PlayerDao;
-import model.Player;
 import request.LetsPartyRequest;
 import request.StartGameRequest;
 import response.CreateGameResponse;
-import response.LetsPartyResponse;
+import response.EmptyResponse;
 
 public class LetsPartyHandler {
     PlayerDao playerDao = new PlayerDao();
     GameDao gameDao = new GameDao();
-    public LetsPartyResponse letsParty(LetsPartyRequest request, Context context) {
+    public EmptyResponse letsParty(LetsPartyRequest request, Context context) {
         try {
             CreateGameResponse response = gameDao.createGame("rocky");
             playerDao.addHost("rocky", response.getHostId(), response.getGameId());
@@ -30,6 +29,6 @@ public class LetsPartyHandler {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new LetsPartyResponse();
+        return new EmptyResponse();
     }
 }
