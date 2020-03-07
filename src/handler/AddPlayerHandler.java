@@ -23,7 +23,7 @@ public class AddPlayerHandler {
             response = playerDao.addPlayer(request.getPlayerName(), request.getGameId());
         }
         catch (PlayerException ex) {
-            throw new Exception(ex.toString());
+            throw new Exception("Internal Server Error: " + ex.toString());
         }
 
         return response;

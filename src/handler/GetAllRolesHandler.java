@@ -14,7 +14,7 @@ public class GetAllRolesHandler {
     private PlayerDao playerDao = new PlayerDao();
     private GameDao gameDao = new GameDao();
 
-    public GetAllRolesResponse getAllRoles(PlayerInfoRequest request, Context context) throws Exception {
+    public GetAllRolesResponse getAllRoles(PlayerInfoRequest request, Context context) {
         LambdaLogger logger = context.getLogger();
         logger.log("Entering getRole");
 
