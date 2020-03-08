@@ -6,21 +6,23 @@ import dao.PlayerDao;
 import exception.PlayerException;
 import request.VoteRequest;
 import response.MessageResponse;
+import response.VoteResponse;
 
 public class VoteHandler {
 
-    public MessageResponse vote(VoteRequest request, Context context) throws Exception {
+    public VoteResponse vote(VoteRequest request, Context context) throws Exception {
         LambdaLogger logger = context.getLogger();
         logger.log("entering vote");
         PlayerDao playerDao = new PlayerDao();
+        boolean isLast = false;
         try {
-            playerDao.vote(request.getVoterId(), request.getVoteeId(), request.getGameId());
+            isLast = playerDao.vote(request.getVoterId(), request.getVoteeId(), request.getGameId());
         }
         catch (PlayerException ex) {
             throw new Exception("Internal Server Error: " + ex.toString());
         }
 
         logger.log("leaving vote");
-        return new MessageResponse("Success");
+        return new VoteResponse(isLast);
     }
 }

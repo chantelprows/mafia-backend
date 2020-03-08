@@ -26,6 +26,7 @@ public class GameDao {
     private static final String KilledAttr = "killed";
     private static final String ReadyToVoteAttr = "readyToVote";
     private static final String PlayerTable = "Player";
+    private static final String AllVotedAttr = "allVoted";
     private static final String EmptyValue = "n/a";
 
     private static AmazonDynamoDB client = AmazonDynamoDBClientBuilder
@@ -51,7 +52,8 @@ public class GameDao {
                 .withString(Role3Attr, EmptyValue)
                 .withString(KilledAttr, EmptyValue)
                 .withBoolean(CompletedActionsAttr, false)
-                .withBoolean(ReadyToVoteAttr, false);
+                .withBoolean(ReadyToVoteAttr, false)
+                .withBoolean(AllVotedAttr, false);
 
         try {
             gameTable.putItem(item);
@@ -82,6 +84,15 @@ public class GameDao {
         client.updateItem(updateItemRequest);
     }
 
+    public void markAllVoted(String gameId) {
+        UpdateItemRequest updateItemRequest = new UpdateItemRequest()
+                .withTableName(GameTable)
+                .addKeyEntry(GameIdAttr, new AttributeValue().withS(gameId))
+                .addAttributeUpdatesEntry(AllVotedAttr, new AttributeValueUpdate().withValue(new AttributeValue().withBOOL(true)));
+
+        client.updateItem(updateItemRequest);
+    }
+
     public boolean areActionsCompleted(String gameId) throws Exception {
         Table table = dynamoDB.getTable(GameTable);
         try {
@@ -90,6 +101,17 @@ public class GameDao {
         }
         catch (Exception ex) {
             throw new Exception("Internal Server Error. Unable to check if all actions are completed.");
+        }
+    }
+
+    public boolean haveAllVoted(String gameId) throws Exception {
+        Table table = dynamoDB.getTable(GameTable);
+        try {
+            Item item = table.getItem(GameIdAttr, gameId);
+            return item.getBoolean(AllVotedAttr);
+        }
+        catch (Exception ex) {
+            throw new Exception("Internal Server Error. Unable to check if all players have voted.");
         }
     }
 

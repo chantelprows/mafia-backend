@@ -322,7 +322,7 @@ public class PlayerDao {
         return roles;
     }
 
-    public void vote(String voterId, String voteeId, String gameId) throws PlayerException {
+    public Boolean vote(String voterId, String voteeId, String gameId) throws PlayerException {
 
         Item voteeItem = playerTable.getItem(PlayerIdAttr, voteeId, GameIdAttr, gameId);
         Item voterItem = playerTable.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
@@ -347,7 +347,7 @@ public class PlayerDao {
         catch (Exception ex) {
             throw new PlayerException("Internal Server Error: Unable to vote!");
         }
-
+        return isLastVote(gameId);
     }
 
 
@@ -436,6 +436,38 @@ public class PlayerDao {
         }
 
         gameDao.markActionsCompleted(gameId);
+        return true;
+    }
+
+    public boolean isLastVote(String gameId) {
+
+        GameDao gameDao = new GameDao();
+        Index index = playerTable.getIndex("gameId-index");
+        Map<String, String> attrNames = new HashMap<>();
+        attrNames.put("#game", GameIdAttr);
+
+        Map<String, AttributeValue> attrValues = new HashMap<>();
+        attrValues.put(":gameId", new AttributeValue().withS(gameId));
+
+        QueryRequest query = new QueryRequest()
+                .withTableName(PlayerTable)
+                .withKeyConditionExpression("#game = :gameId")
+                .withExpressionAttributeNames(attrNames)
+                .withExpressionAttributeValues(attrValues)
+                .withIndexName(index.getIndexName());
+
+        QueryResult result = client.query(query);
+        List<Map<String, AttributeValue>> items = result.getItems();
+
+        if (items != null) {
+            for (Map<String, AttributeValue> item: items) {
+                if (item.get(VotedForAttr).getS().equals(EmptyValue)) {
+                    return false;
+                }
+            }
+        }
+
+        gameDao.markAllVoted(gameId);
         return true;
     }
 
