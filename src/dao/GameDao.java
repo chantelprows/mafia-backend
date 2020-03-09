@@ -40,7 +40,7 @@ public class GameDao {
         CreateGameResponse response;
 
         String gameId = UUID.randomUUID().toString().substring(0, 4);
-        String hostId = UUID.randomUUID().toString().substring(0, 4);
+        String hostId = UUID.randomUUID().toString().substring(0, 6);
 
         Item item = new Item()
                 .withPrimaryKey(GameIdAttr, gameId)
