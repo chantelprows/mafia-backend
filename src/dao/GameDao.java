@@ -39,8 +39,8 @@ public class GameDao {
     public CreateGameResponse createGame(String hostName) throws Exception {
         CreateGameResponse response;
 
-        String gameId = UUID.randomUUID().toString().substring(0, 6);
-        String hostId = UUID.randomUUID().toString().substring(0, 6);
+        String gameId = UUID.randomUUID().toString().substring(0, 4);
+        String hostId = UUID.randomUUID().toString().substring(0, 4);
 
         Item item = new Item()
                 .withPrimaryKey(GameIdAttr, gameId)
