@@ -65,7 +65,7 @@ public class PlayerDao {
         //Table table = dynamoDB.getTable(PlayerTable);
         AddPlayerResponse response;
         GameDao gameDao = new GameDao();
-        String playerId = UUID.randomUUID().toString().substring(0, 6);
+        String playerId = UUID.randomUUID().toString().substring(0, 4);
 
         if (gameDao.isGame(gameId)) {
 
@@ -276,6 +276,13 @@ public class PlayerDao {
         Item item = table.getItem(PlayerIdAttr, playerId, GameIdAttr, gameId);
 
         return item.getString(DayRoleAttr);
+    }
+
+    public String getName(String gameId, String playerId) {
+        Table table = dynamoDB.getTable(PlayerTable);
+        Item item = table.getItem(PlayerIdAttr, playerId, GameIdAttr, gameId);
+
+        return item.getString(PlayerNameAttr);
     }
 
     public String getNightRole(String gameId, String playerId) {

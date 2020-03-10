@@ -236,38 +236,54 @@ public class GameDao {
         PlayerDao playerDao = new PlayerDao();
         GameDao gameDao = new GameDao();
         int numCenterRoles = 3;
-        List<String> roles = Arrays.asList(request.getRoles());
+        List<String> primitiveList = Arrays.asList(request.getRoles());
+        ArrayList<String> roles = new ArrayList<>(primitiveList);
         ArrayList<String> players = playerDao.getPlayers(request.getGameId(), false);
+
+        String hostName = playerDao.getName(request.getGameId(), request.getHostId());
         int numPlayers = players.size();
         boolean error = false;
 
-        Collections.shuffle(roles);
-
-        int i;
-        for (i = 0; i < numPlayers; i++) {
-            if (!playerDao.giveRole(players.get(i), roles.get(i), "day", request.getGameId())) {
+        if (hostName.equals("AlCapone")) {
+            if (!playerDao.giveRole(request.getHostId(), "mafia", "day", request.getGameId())) {
                 error = true;
             }
-            if (!playerDao.giveRole(players.get(i), roles.get(i), "night", request.getGameId())) {
+            if (!playerDao.giveRole(request.getHostId(), "mafia", "night", request.getGameId())) {
                 error = true;
             }
-        }
 
-        String[] centerRoles =  new String[numCenterRoles];
-
-        for (int j = 0; j < numCenterRoles; j++) {
-            centerRoles[j] = roles.get(i);
-            i++;
+            roles.remove("mafia");
+            players.remove(request.getHostId());
         }
+        //else {
 
-        if (error) {
-            throw new Exception("Internal Server Error");
-        }
-        else {
-            gameDao.initializePile(centerRoles, request.getGameId());
-        }
+            Collections.shuffle(roles);
 
-        gameDao.gameStarted(request.getGameId());
+            int i;
+            for (i = 0; i < players.size(); i++) {
+                if (!playerDao.giveRole(players.get(i), roles.get(i), "day", request.getGameId())) {
+                    error = true;
+                }
+                if (!playerDao.giveRole(players.get(i), roles.get(i), "night", request.getGameId())) {
+                    error = true;
+                }
+            }
+
+            String[] centerRoles = new String[numCenterRoles];
+
+            for (int j = 0; j < numCenterRoles; j++) {
+                centerRoles[j] = roles.get(i);
+                i++;
+            }
+
+            if (error) {
+                throw new Exception("Internal Server Error");
+            } else {
+                gameDao.initializePile(centerRoles, request.getGameId());
+            }
+
+            gameDao.gameStarted(request.getGameId());
+        //}
     }
 
     public Boolean endGame(String gameId) {
