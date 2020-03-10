@@ -24,7 +24,7 @@ public class MafiaHandler {
             throw new Exception("Internal Server Error: Unable to fetch center role");
         }
 
-        playerDao.completeAction(request.getGameId(), request.getPlayerId());
+//        playerDao.completeAction(request.getGameId(), request.getPlayerId());
 
         logger.log("leaving mafia");
         return new MafiaResponse(role);

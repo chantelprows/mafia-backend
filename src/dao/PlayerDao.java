@@ -10,6 +10,7 @@ import com.amazonaws.services.dynamodbv2.model.*;
 import com.amazonaws.services.dynamodbv2.xspec.S;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import exception.PlayerException;
+import model.PlayerCombo;
 import response.AddPlayerResponse;
 
 import java.util.*;
@@ -133,7 +134,7 @@ public class PlayerDao {
         return false;
     }
 
-    public ArrayList<String> getPlayers(String gameId, boolean getNames) {
+    public PlayerCombo getPlayers(String gameId, boolean getNames) {
 
         Index index = playerTable.getIndex("gameId-index");
         Map<String, String> attrNames = new HashMap<>();
@@ -152,23 +153,26 @@ public class PlayerDao {
         QueryResult result = client.query(query);
         List<Map<String, AttributeValue>> items = result.getItems();
         String playerId;
-        ArrayList<String> players = new ArrayList<>();
+        ArrayList<String> playerNames = new ArrayList<>();
+        ArrayList<String> playerIds = new ArrayList<>();
 
 
         if (items != null) {
             for (Map<String, AttributeValue> item: items) {
                 if (getNames) {
                     playerId = item.get(PlayerNameAttr).getS();
-                    players.add(playerId);
+                    playerNames.add(playerId);
                 }
-                else {
-                    playerId = item.get(PlayerIdAttr).getS();
-                    players.add(playerId);
-                }
+                playerId = item.get(PlayerIdAttr).getS();
+                playerIds.add(playerId);
             }
         }
 
-        return players;
+        PlayerCombo pc = new PlayerCombo();
+        pc.setPlayerIds(playerIds);
+        pc.setPlayerNames(playerNames);
+
+        return pc;
 
     }
 
@@ -220,7 +224,7 @@ public class PlayerDao {
 
     public Boolean clearLobby(String gameId) {
         // delete all player table items with associated gameId
-        ArrayList<String> playerIds = getPlayers(gameId, false);
+        ArrayList<String> playerIds = getPlayers(gameId, false).getPlayerIds();
         Boolean result = true;
 
         for (String playerId: playerIds) {
@@ -473,7 +477,7 @@ public class PlayerDao {
 
     public String countVotes(String gameId) throws Exception {
 
-        ArrayList<String> playerIds = getPlayers(gameId, false);
+        ArrayList<String> playerIds = getPlayers(gameId, false).getPlayerIds();
 
         TreeMap<Integer, ArrayList<String>> map = new TreeMap<>();
 
@@ -527,7 +531,7 @@ public class PlayerDao {
 
     private String calculateLoser(ArrayList<String> playerNames, String gameId) {
 
-        ArrayList<String> allPlayers = getPlayers(gameId, false);
+        ArrayList<String> allPlayers = getPlayers(gameId, false).getPlayerIds();
         String deadPlayer = playerNames.get(0);
 
         for (String playerId: allPlayers) {

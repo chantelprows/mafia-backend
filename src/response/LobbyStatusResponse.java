@@ -5,6 +5,7 @@ import java.util.List;
 public class LobbyStatusResponse {
     public boolean hasStarted;
     public List<String> playerNames;
+    public List<String> playerIds;
 
     public boolean getHasStarted() {
         return hasStarted;
@@ -20,5 +21,13 @@ public class LobbyStatusResponse {
 
     public void setPlayerNames(List<String> playerNames) {
         this.playerNames = playerNames;
+    }
+
+    public List<String> getPlayerIds() {
+        return playerIds;
+    }
+
+    public void setPlayerIds(List<String> playerIds) {
+        this.playerIds = playerIds;
     }
 }

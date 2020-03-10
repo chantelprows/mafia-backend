@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import dao.GameDao;
 import dao.PlayerDao;
+import model.PlayerCombo;
 import request.GameRequest;
 import response.LobbyStatusResponse;
 
@@ -17,7 +18,9 @@ public class LobbyStatusHandler {
 
         LobbyStatusResponse response = new LobbyStatusResponse();
         response.setHasStarted(gameDao.hasStarted(request.getGameId()));
-        response.setPlayerNames(playerDao.getPlayers(request.getGameId(), true));
+        PlayerCombo pc = playerDao.getPlayers(request.getGameId(), true);
+        response.setPlayerNames(pc.getPlayerNames());
+        response.setPlayerIds(pc.getPlayerIds());
 
         return response;
     }

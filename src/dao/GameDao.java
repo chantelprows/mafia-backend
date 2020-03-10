@@ -237,7 +237,7 @@ public class GameDao {
         GameDao gameDao = new GameDao();
         int numCenterRoles = 3;
         List<String> roles = Arrays.asList(request.getRoles());
-        ArrayList<String> players = playerDao.getPlayers(request.getGameId(), false);
+        ArrayList<String> players = playerDao.getPlayers(request.getGameId(), false).getPlayerIds();
         int numPlayers = players.size();
         boolean error = false;
 
