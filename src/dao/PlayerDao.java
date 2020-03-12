@@ -12,6 +12,7 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import exception.PlayerException;
 import model.PlayerCombo;
 import response.AddPlayerResponse;
+import response.CountVotesResponse;
 
 import java.util.*;
 
@@ -32,6 +33,8 @@ public class PlayerDao {
     private static final String VotesAgainstAttr = "votesAgainst";
     private static final String HostNameAttr = "hostName";
     private static final String EmptyValue = "n/a";
+    private static final String VotesPresentAttr = "votesPresent";
+    private static final String PresentKeyWord = "(present)";
 
     private static AmazonDynamoDB client = AmazonDynamoDBClientBuilder
             .standard()
@@ -39,6 +42,7 @@ public class PlayerDao {
             .build();
     private static DynamoDB dynamoDB = new DynamoDB(client);
     private static Table playerTable = dynamoDB.getTable(PlayerTable);
+    private static Table gameTable = dynamoDB.getTable(GameTable);
 
     public void addHost(String hostName, String hostId, String gameId) throws PlayerException {
 
@@ -335,28 +339,58 @@ public class PlayerDao {
 
     public Boolean vote(String voterId, String voteeId, String gameId) throws PlayerException {
 
-        Item voteeItem = playerTable.getItem(PlayerIdAttr, voteeId, GameIdAttr, gameId);
         Item voterItem = playerTable.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
-        List<Object> votes = voteeItem.getList(VotesAgainstAttr);
-        UpdateItemSpec update1 = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, voterId, GameIdAttr, gameId)
-                .withUpdateExpression("set votedFor=:d")
-                .withValueMap(new ValueMap()
-                        .withString(":d", voteeItem.getString(PlayerNameAttr)))
-                .withReturnValues(ReturnValue.UPDATED_NEW);
 
-        votes.add(voterItem.getString(PlayerNameAttr));
-        UpdateItemSpec update2 = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, voteeId, GameIdAttr, gameId)
-                .withUpdateExpression("set votesAgainst=:d")
-                .withValueMap(new ValueMap()
-                        .withList(":d", votes))
-                .withReturnValues(ReturnValue.UPDATED_NEW);
+        UpdateItemSpec update1;
+        UpdateItemSpec update2;
 
-        try {
-            playerTable.updateItem(update1);
-            playerTable.updateItem(update2);
+        if (voteeId.equals(PresentKeyWord)) {
+            update1 = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, voterId, GameIdAttr, gameId)
+                    .withUpdateExpression("set votedFor=:d")
+                    .withValueMap(new ValueMap()
+                            .withString(":d", PresentKeyWord))
+                    .withReturnValues(ReturnValue.UPDATED_NEW);
+
+            Item game = gameTable.getItem(GameIdAttr, gameId);
+            List<Object> votesPresent = game.getList(VotesPresentAttr);
+            votesPresent.add(voterItem.getString(PlayerNameAttr));
+
+            update2 = new UpdateItemSpec().withPrimaryKey(GameIdAttr, gameId)
+                    .withUpdateExpression("set votesPresent=:d")
+                    .withValueMap(new ValueMap()
+                            .withList(":d", votesPresent))
+                    .withReturnValues(ReturnValue.UPDATED_NEW);
+
+            try {
+                playerTable.updateItem(update1);
+                gameTable.updateItem(update2);
+            } catch (Exception ex) {
+                throw new PlayerException("Internal Server Error: Unable to vote!");
+            }
         }
-        catch (Exception ex) {
-            throw new PlayerException("Internal Server Error: Unable to vote!");
+        else {
+            Item voteeItem = playerTable.getItem(PlayerIdAttr, voteeId, GameIdAttr, gameId);
+            List<Object> votes = voteeItem.getList(VotesAgainstAttr);
+
+            update1 = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, voterId, GameIdAttr, gameId)
+                    .withUpdateExpression("set votedFor=:d")
+                    .withValueMap(new ValueMap()
+                            .withString(":d", voteeItem.getString(PlayerNameAttr)))
+                    .withReturnValues(ReturnValue.UPDATED_NEW);
+
+            votes.add(voterItem.getString(PlayerNameAttr));
+            update2 = new UpdateItemSpec().withPrimaryKey(PlayerIdAttr, voteeId, GameIdAttr, gameId)
+                    .withUpdateExpression("set votesAgainst=:d")
+                    .withValueMap(new ValueMap()
+                            .withList(":d", votes))
+                    .withReturnValues(ReturnValue.UPDATED_NEW);
+
+            try {
+                playerTable.updateItem(update1);
+                playerTable.updateItem(update2);
+            } catch (Exception ex) {
+                throw new PlayerException("Internal Server Error: Unable to vote!");
+            }
         }
         return isLastVote(gameId);
     }
@@ -482,49 +516,59 @@ public class PlayerDao {
         return true;
     }
 
-    public String countVotes(String gameId) throws Exception {
+    public CountVotesResponse countVotes(String gameId) throws Exception {
 
         ArrayList<String> playerIds = getPlayers(gameId, false).getPlayerIds();
+        GameDao gameDao = new GameDao();
 
         TreeMap<Integer, ArrayList<String>> map = new TreeMap<>();
 
         for (String playerId: playerIds) {
-            String votedFor = getVote(gameId, playerId);
 
-            if (mapContains(map, votedFor)) {
-                Integer numVotes;
-                for (Map.Entry<Integer, ArrayList<String>> entry : map.entrySet()) {
-                    if (entry.getValue().contains(votedFor)) {
-                        numVotes = entry.getKey();
-                        ArrayList<String> oldList = map.get(numVotes);
-                        oldList.remove(votedFor);
-                        numVotes++;
-                        if (map.containsKey(numVotes)) {
-                            ArrayList<String> newList = map.get(numVotes);
-                            newList.add(votedFor);
-                            map.put(numVotes, newList);
-                        }
-                        else {
-                            ArrayList<String> names = new ArrayList<>();
-                            names.add(votedFor);
-                            map.put(numVotes, names);
-                        }
-                        break;
-                    }
-                }
+            String playerName = getName(gameId, playerId);
+            List<Object> primitive = getVotesAgainst(gameId, playerId);
+            ArrayList<String> votesAgainst = new ArrayList<>();
 
+            for (Object player: primitive) {
+                votesAgainst.add((String) player);
+            }
+
+            Integer numVotes = votesAgainst.size();
+            if (map.containsKey(numVotes)) {
+                ArrayList<String> names = map.get(numVotes);
+                names.add(playerName);
+                map.put(numVotes, names);
             }
             else {
                 ArrayList<String> names = new ArrayList<>();
-                names.add(votedFor);
-                map.put(1, names);
+                names.add(playerName);
+                map.put(numVotes, names);
             }
+
+        }
+        //now add votes for present
+        ArrayList<String> votesPresent = new ArrayList<>(gameDao.getVotesPresent(gameId));
+
+        Integer numVotes = votesPresent.size();
+
+        if (map.containsKey(numVotes)) {
+            ArrayList<String> names = map.get(numVotes);
+            names.add(PresentKeyWord);
+            map.put(numVotes, names);
+        }
+        else {
+            ArrayList<String> names = new ArrayList<>();
+            names.add(PresentKeyWord);
+            map.put(numVotes, names);
         }
 
+        CountVotesResponse response = new CountVotesResponse();
+        response.setPlayerName(calculateLoser(map.get(map.lastKey()), gameId));
         if (map.get(map.lastKey()).size() > 1) {
-            return calculateLoser(map.get(map.lastKey()), gameId);
+
+            response.setTiedPlayers(map.get(map.lastKey()));
         }
-        return map.get(map.lastKey()).get(0);
+        return response;
     }
 
     private boolean mapContains(Map<Integer, ArrayList<String>> map, String name) {
@@ -540,18 +584,23 @@ public class PlayerDao {
 
         ArrayList<String> allPlayers = getPlayers(gameId, false).getPlayerIds();
         String deadPlayer = playerNames.get(0);
+        if (deadPlayer.equals(PresentKeyWord)) {
+            deadPlayer = playerNames.get(1);
+        }
 
         for (String playerId: allPlayers) {
             Table table = dynamoDB.getTable(PlayerTable);
-            Item item = table.getItem(PlayerIdAttr, playerId, GameIdAttr, gameId);
+            if (!playerId.equals(PresentKeyWord)) {
+                Item item = table.getItem(PlayerIdAttr, playerId, GameIdAttr, gameId);
 
-            if (playerNames.contains(item.getString(PlayerNameAttr))) {
+                if (playerNames.contains(item.getString(PlayerNameAttr))) {
 
-                if (item.getString(DayRoleAttr).equals("mafia")) {
-                    deadPlayer = item.getString(PlayerNameAttr);
-                    break;
+                    if (item.getString(DayRoleAttr).equals("mafia")) {
+                        deadPlayer = item.getString(PlayerNameAttr);
+                        break;
+                    }
+
                 }
-
             }
         }
 

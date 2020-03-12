@@ -27,6 +27,7 @@ public class GameDao {
     private static final String ReadyToVoteAttr = "readyToVote";
     private static final String PlayerTable = "Player";
     private static final String AllVotedAttr = "allVoted";
+    private static final String VotesPresentAttr = "votesPresent";
     private static final String EmptyValue = "n/a";
 
     private static AmazonDynamoDB client = AmazonDynamoDBClientBuilder
@@ -39,6 +40,7 @@ public class GameDao {
     public CreateGameResponse createGame(String hostName) throws Exception {
         CreateGameResponse response;
 
+        List<String> votes = new ArrayList<>();
         String gameId = UUID.randomUUID().toString().substring(0, 4);
         String hostId = UUID.randomUUID().toString().substring(0, 6);
 
@@ -53,7 +55,8 @@ public class GameDao {
                 .withString(KilledAttr, EmptyValue)
                 .withBoolean(CompletedActionsAttr, false)
                 .withBoolean(ReadyToVoteAttr, false)
-                .withBoolean(AllVotedAttr, false);
+                .withBoolean(AllVotedAttr, false)
+                .withList(VotesPresentAttr, votes);
 
         try {
             gameTable.putItem(item);
@@ -178,6 +181,17 @@ public class GameDao {
         try {
             Item item = table.getItem("gameId", gameId);
             return item.getBoolean("hasStarted");
+        }
+        catch (Exception ex) {
+            throw new Exception("Internal Server Error");
+        }
+    }
+
+    public List<String> getVotesPresent(String gameId) throws Exception {
+        Table table = dynamoDB.getTable(GameTable);
+        try {
+            Item item = table.getItem(GameIdAttr, gameId);
+            return item.getList(VotesPresentAttr);
         }
         catch (Exception ex) {
             throw new Exception("Internal Server Error");

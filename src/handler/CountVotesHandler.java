@@ -14,6 +14,6 @@ public class CountVotesHandler {
         logger.log("Entering countVotes");
 
         logger.log("Leaving countVotes");
-        return new CountVotesResponse(playerDao.countVotes(request.getGameId()));
+        return playerDao.countVotes(request.getGameId());
     }
 }
