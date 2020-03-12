@@ -666,7 +666,6 @@ public class PlayerDao {
     }
 
     public boolean didWin(String gameId, String playerId) throws Exception {
-        boolean didWin = false;
 
         String playerRole = getRole(gameId, playerId);
 
