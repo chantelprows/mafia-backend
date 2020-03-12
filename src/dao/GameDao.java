@@ -96,6 +96,15 @@ public class GameDao {
         client.updateItem(updateItemRequest);
     }
 
+    public void markKilled(String gameId, String playerName) {
+        UpdateItemRequest updateItemRequest = new UpdateItemRequest()
+                .withTableName(GameTable)
+                .addKeyEntry(GameIdAttr, new AttributeValue().withS(gameId))
+                .addAttributeUpdatesEntry(KilledAttr, new AttributeValueUpdate().withValue(new AttributeValue().withS(playerName)));
+
+        client.updateItem(updateItemRequest);
+    }
+
     public boolean areActionsCompleted(String gameId) throws Exception {
         Table table = dynamoDB.getTable(GameTable);
         try {
@@ -112,6 +121,17 @@ public class GameDao {
         try {
             Item item = table.getItem(GameIdAttr, gameId);
             return item.getBoolean(AllVotedAttr);
+        }
+        catch (Exception ex) {
+            throw new Exception("Internal Server Error. Unable to check if all players have voted.");
+        }
+    }
+
+    public String getKilled(String gameId) throws Exception {
+        Table table = dynamoDB.getTable(GameTable);
+        try {
+            Item item = table.getItem(GameIdAttr, gameId);
+            return item.getString(KilledAttr);
         }
         catch (Exception ex) {
             throw new Exception("Internal Server Error. Unable to check if all players have voted.");

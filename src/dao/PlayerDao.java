@@ -35,6 +35,12 @@ public class PlayerDao {
     private static final String EmptyValue = "n/a";
     private static final String VotesPresentAttr = "votesPresent";
     private static final String PresentKeyWord = "(present)";
+    private static final String Mafia = "mafia";
+    private static final String HenchPerson = "henchperson";
+    private static final String Tanner = "tanner";
+    private static final int civs = 2;
+    private static final int tanner = 1;
+    private static final int mafia = 0;
 
     private static AmazonDynamoDB client = AmazonDynamoDBClientBuilder
             .standard()
@@ -43,6 +49,8 @@ public class PlayerDao {
     private static DynamoDB dynamoDB = new DynamoDB(client);
     private static Table playerTable = dynamoDB.getTable(PlayerTable);
     private static Table gameTable = dynamoDB.getTable(GameTable);
+    private static GameDao gameDao = new GameDao();
+    private boolean[] outcome;
 
     public void addHost(String hostName, String hostId, String gameId) throws PlayerException {
 
@@ -69,7 +77,6 @@ public class PlayerDao {
     public AddPlayerResponse addPlayer(String playerName, String gameId) throws Exception {
         //Table table = dynamoDB.getTable(PlayerTable);
         AddPlayerResponse response;
-        GameDao gameDao = new GameDao();
         String playerId = UUID.randomUUID().toString().substring(0, 6);
 
         if (gameDao.isGame(gameId)) {
@@ -451,7 +458,6 @@ public class PlayerDao {
 
     public boolean isLastAction(String gameId) {
 
-        GameDao gameDao = new GameDao();
         Index index = playerTable.getIndex("gameId-index");
         Map<String, String> attrNames = new HashMap<>();
         attrNames.put("#game", GameIdAttr);
@@ -486,7 +492,6 @@ public class PlayerDao {
 
     public boolean isLastVote(String gameId) {
 
-        GameDao gameDao = new GameDao();
         Index index = playerTable.getIndex("gameId-index");
         Map<String, String> attrNames = new HashMap<>();
         attrNames.put("#game", GameIdAttr);
@@ -519,7 +524,6 @@ public class PlayerDao {
     public CountVotesResponse countVotes(String gameId) throws Exception {
 
         ArrayList<String> playerIds = getPlayers(gameId, false).getPlayerIds();
-        GameDao gameDao = new GameDao();
 
         TreeMap<Integer, ArrayList<String>> map = new TreeMap<>();
 
@@ -562,12 +566,15 @@ public class PlayerDao {
             map.put(numVotes, names);
         }
 
+        //set name of person killed, and add list of names that are tied if applicable
         CountVotesResponse response = new CountVotesResponse();
         response.setPlayerName(calculateLoser(map.get(map.lastKey()), gameId));
         if (map.get(map.lastKey()).size() > 1) {
 
             response.setTiedPlayers(map.get(map.lastKey()));
         }
+        gameDao.markKilled(gameId, response.getPlayerName());
+        updateOutcome(gameId);
         return response;
     }
 
@@ -605,6 +612,74 @@ public class PlayerDao {
         }
 
         return deadPlayer;
+    }
+
+    private String idFromName(String gameId, String playerName) throws PlayerException {
+        Index index = playerTable.getIndex("gameId-index");
+        Map<String, String> attrNames = new HashMap<>();
+        attrNames.put("#game", GameIdAttr);
+
+        Map<String, AttributeValue> attrValues = new HashMap<>();
+        attrValues.put(":gameId", new AttributeValue().withS(gameId));
+
+        QueryRequest query = new QueryRequest()
+                .withTableName(PlayerTable)
+                .withKeyConditionExpression("#game = :gameId")
+                .withExpressionAttributeNames(attrNames)
+                .withExpressionAttributeValues(attrValues)
+                .withIndexName(index.getIndexName());
+
+        QueryResult result = client.query(query);
+        List<Map<String, AttributeValue>> items = result.getItems();
+        String playerId;
+        ArrayList<String> playerNames = new ArrayList<>();
+        ArrayList<String> playerIds = new ArrayList<>();
+
+
+        if (items != null) {
+            for (Map<String, AttributeValue> item: items) {
+                if (item.get(PlayerNameAttr).equals(playerName)) {
+                    return item.get(PlayerIdAttr).getS();
+                }
+            }
+        }
+        throw new PlayerException("Internal Server Error");
+    }
+
+    private void updateOutcome(String gameId) throws Exception {
+        outcome = new boolean[]{false, false, false};
+
+        String killedId = idFromName(gameId, gameDao.getKilled(gameId));
+        String killedRole = getRole(gameId, killedId);
+
+        switch (killedRole) {
+            case Mafia:
+                outcome[civs] = true;
+                break;
+            case Tanner:
+                outcome[tanner] = true;
+                break;
+            default:
+                outcome[mafia] = true;
+                break;
+        }
+    }
+
+    public boolean didWin(String gameId, String playerId) throws Exception {
+        boolean didWin = false;
+
+        String playerRole = getRole(gameId, playerId);
+
+        switch (playerRole) {
+            case Mafia:
+            case HenchPerson:
+                return outcome[mafia];
+            case Tanner:
+                return outcome[tanner];
+            default:
+                return outcome[civs];
+        }
+
     }
 
 }
