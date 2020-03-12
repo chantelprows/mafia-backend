@@ -233,10 +233,10 @@ public class PlayerDao {
 
     }
 
-    public Boolean clearLobby(String gameId) {
+    public boolean clearLobby(String gameId) {
         // delete all player table items with associated gameId
         ArrayList<String> playerIds = getPlayers(gameId, false).getPlayerIds();
-        Boolean result = true;
+        boolean result = true;
 
         for (String playerId: playerIds) {
 
@@ -403,7 +403,7 @@ public class PlayerDao {
     }
 
 
-    public boolean hasVoted(String gameId, String voterId) throws Exception {
+    public boolean hasVoted(String gameId, String voterId) {
         Table table = dynamoDB.getTable(PlayerTable);
         Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
 
@@ -414,30 +414,46 @@ public class PlayerDao {
 
     public String getVote(String gameId, String voterId) throws Exception {
         Table table = dynamoDB.getTable(PlayerTable);
-        Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
-
-        return item.getString(VotedForAttr);
+        try {
+            Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
+            return item.getString(VotedForAttr);
+        }
+        catch (Exception ex) {
+            throw new PlayerException("Internal Server Error: Unable to retrieve vote!");
+        }
     }
 
     public boolean hasCompletedAction(String gameId, String voterId) throws Exception {
         Table table = dynamoDB.getTable(PlayerTable);
-        Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
-
-        return item.getBoolean(CompletedActionAttr);
+        try {
+            Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
+            return item.getBoolean(CompletedActionAttr);
+        }
+        catch (Exception ex) {
+            throw new PlayerException("Internal Server Error: Unable to see if action has been completed!");
+        }
     }
 
     public boolean hasSeenRole(String gameId, String voterId) throws Exception {
         Table table = dynamoDB.getTable(PlayerTable);
-        Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
-
-        return item.getBoolean(SeenRoleAttr);
+        try {
+            Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
+            return item.getBoolean(SeenRoleAttr);
+        }
+        catch (Exception ex) {
+            throw new PlayerException("Internal Server Error");
+        }
     }
 
     public boolean isHost(String gameId, String voterId) throws Exception {
         Table table = dynamoDB.getTable(PlayerTable);
-        Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
-
-        return item.getBoolean(IsHostAttr);
+        try {
+            Item item = table.getItem(PlayerIdAttr, voterId, GameIdAttr, gameId);
+            return item.getBoolean(IsHostAttr);
+        }
+        catch (Exception ex) {
+            throw new PlayerException("Internal Server Error");
+        }
     }
 
     public boolean completeAction(String gameId, String playerId) throws PlayerException {
@@ -631,14 +647,10 @@ public class PlayerDao {
 
         QueryResult result = client.query(query);
         List<Map<String, AttributeValue>> items = result.getItems();
-        String playerId;
-        ArrayList<String> playerNames = new ArrayList<>();
-        ArrayList<String> playerIds = new ArrayList<>();
-
 
         if (items != null) {
             for (Map<String, AttributeValue> item: items) {
-                if (item.get(PlayerNameAttr).equals(playerName)) {
+                if (item.get(PlayerNameAttr).getS().equals(playerName)) {
                     return item.get(PlayerIdAttr).getS();
                 }
             }
@@ -665,7 +677,7 @@ public class PlayerDao {
         }
     }
 
-    public boolean didWin(String gameId, String playerId) throws Exception {
+    public boolean didWin(String gameId, String playerId) {
 
         String playerRole = getRole(gameId, playerId);
 
